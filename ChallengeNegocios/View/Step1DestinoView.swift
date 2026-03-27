@@ -155,7 +155,6 @@ struct StepIndicatorView: View {
                 RoundedRectangle(cornerRadius: AppLayout.alturaIndicador / 2)
                     .fill(i <= etapaAtual ? Color.appDestaque : Color(.systemGray4))
                     .frame(width: i == etapaAtual ? 32 : 20, height: AppLayout.alturaIndicador)
-                    .animation(.easeInOut(duration: 0.2), value: etapaAtual)
             }
             Spacer()
         }
@@ -164,12 +163,13 @@ struct StepIndicatorView: View {
 
 struct BotaoContinuarView: View {
     let ativo: Bool
+    var rotulo: String = "Continuar"
     let acao: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
             Button(action: acao) {
-                Text("Continuar")
+                Text(rotulo)
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .frame(height: AppLayout.alturaBotao)

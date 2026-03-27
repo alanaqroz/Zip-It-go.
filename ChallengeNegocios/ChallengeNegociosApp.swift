@@ -33,8 +33,9 @@ struct AppRootView: View {
                 .navigationDestination(for: Int.self) { etapa in
                     switch etapa {
                     case 2: Step2ViajantesView()
-                    case 3: Text("Tela 3 — em breve")   // substituir por Step3AtividadesView()
-                    case 4: Text("Tela 4 — em breve")   // substituir por Step4ConfirmacaoView()
+                    case 3: Step3TipoViagemView()
+                    case 4: Step4ConfirmacaoView()
+                    case 5: Text("Tela 5 — em breve")   // substituir por Step5GerarListaView()
                     default: EmptyView()
                     }
                 }
