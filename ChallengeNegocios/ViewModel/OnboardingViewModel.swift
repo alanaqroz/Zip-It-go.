@@ -2,14 +2,7 @@
 //  OnboardingViewModel.swift
 //  ChallengeNegocios
 //
-//  Estado compartilhado entre todas as telas do onboarding (Telas 1–4).
-//  A navegação usa um array de Int como caminho (etapas visitadas).
-//
-//  Fluxo:
-//    [] → Tela 1 (raiz)
-//    [2] → Tela 2
-//    [2, 3] → Tela 3
-//    [2, 3, 4] → Tela 4
+//  Created by Alana Queiroz on 26/03/26.
 //
 
 import Foundation

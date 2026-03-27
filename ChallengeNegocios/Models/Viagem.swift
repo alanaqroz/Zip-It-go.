@@ -2,7 +2,7 @@
 //  Viagem.swift
 //  ChallengeNegocios
 //
-//  Modelo central do app. Fácil de adicionar novos campos aqui.
+//  Created by Alana Queiroz on 26/03/26.
 //
 
 import Foundation

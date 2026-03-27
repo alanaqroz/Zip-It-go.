@@ -2,14 +2,12 @@
 //  AppTheme.swift
 //  ChallengeNegocios
 //
-//  Para mudar o visual do app, edite apenas este arquivo.
-//  Cores, tamanhos e espaçamentos centralizados aqui.
+//  Created by Alana Queiroz on 26/03/26.
 //
 
 import SwiftUI
 
 // MARK: - Cores
-// Troque os valores abaixo para mudar as cores do app inteiro.
 
 extension Color {
     static let appFundo           = Color(.systemBackground)   // fundo das telas

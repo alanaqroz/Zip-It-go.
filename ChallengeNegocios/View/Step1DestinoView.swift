@@ -2,7 +2,7 @@
 //  Step1DestinoView.swift
 //  ChallengeNegocios
 //
-//  Tela 1 — Destino e datas da viagem.
+//  Created by Alana Queiroz on 26/03/26.
 //
 
 import SwiftUI

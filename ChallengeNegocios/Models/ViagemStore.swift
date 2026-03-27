@@ -2,8 +2,7 @@
 //  ViagemStore.swift
 //  ChallengeNegocios
 //
-//  Salva e carrega as viagens localmente via UserDefaults.
-//  Todos os dados persistem ao fechar o app.
+//  Created by Alana Queiroz on 26/03/26.
 //
 
 import Foundation
