@@ -35,7 +35,7 @@ struct AppRootView: View {
                     case 2: Step2ViajantesView()
                     case 3: Step3TipoViagemView()
                     case 4: Step4ConfirmacaoView()
-                    case 5: Text("Tela 5 — em breve")   // substituir por Step5GerarListaView()
+                    case 5: Step5GerarListaView()
                     default: EmptyView()
                     }
                 }
