@@ -2,8 +2,6 @@
 //  ChecklistViewModel.swift
 //  ChallengeNegocios
 //
-//  Created by Alana Queiroz on 25/03/26.
-//
 
 import Foundation
 import FoundationModels
@@ -15,6 +13,20 @@ class ChecklistViewModel {
     var destinoSelecionado: String = ""
     var dataIda: Date = Date()
     var dataVolta: Date = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
+    var tipoViagem: String = ""
+    var atividades: String = ""
+    var numCriancas: Int = 0
+    var numBebes: Int = 0
+
+    func configurar(com viagem: Viagem) {
+        destinoSelecionado = viagem.destino
+        dataIda            = viagem.dataIda
+        dataVolta          = viagem.dataVolta
+        tipoViagem         = viagem.tipoViagem.rawValue
+        atividades         = viagem.resumoAtividades
+        numCriancas        = viagem.numCriancas
+        numBebes           = viagem.numBebes
+    }
 
     // MARK: - Weather display
     var tempMin: Double? = nil
@@ -51,6 +63,12 @@ class ChecklistViewModel {
         }
     }
 
+    func ajustarQuantidade(id: UUID, delta: Int) {
+        if let idx = itens.firstIndex(where: { $0.id == id }) {
+            itens[idx].quantidade = max(1, itens[idx].quantidade + delta)
+        }
+    }
+
     func adicionarItem(categoria: String, nome: String) {
         guard !nome.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         itens.append(ItemMala(nome: "\(categoria)#\(nome)"))
@@ -75,7 +93,6 @@ class ChecklistViewModel {
         let qtdPijamas   = max(1, Int(ceil(Double(dias) / 4.0)))
 
         var isoCode = await WeatherService.shared.buscarCodigoPais(destino: destinoSelecionado)
-
         var classificacao = "AMENO"
         var climaResumo   = ""
 
@@ -93,104 +110,184 @@ class ChecklistViewModel {
             }
             classificacao = clima.classificacao
             if !clima.isoCountryCode.isEmpty { isoCode = clima.isoCountryCode }
-            climaResumo = "\(clima.classificacao) — \(Int(clima.tempMin))°C a \(Int(clima.tempMax))°C, \(clima.estacao), \(clima.condicaoDescricao)"
+            climaResumo = "\(Int(clima.tempMin))°C a \(Int(clima.tempMax))°C, \(clima.estacao), \(clima.condicaoDescricao)"
         } catch {
             let fmt = DateFormatter()
             fmt.dateFormat = "MMMM"
-            climaResumo = "Mês: \(fmt.string(from: dataIda)) (clima estimado)"
+            climaResumo = "mês \(fmt.string(from: dataIda))"
         }
 
         let foraDoBrasil = isoCode.uppercased() != "BR" && !isoCode.isEmpty
 
-        let extrasClima: String
+
+        // Clothing
+        var linhasBase: [String] = [
+            "Clothing#\(qtdCamisetas) Camisetas",
+            "Clothing#\(qtdIntimas) Roupas íntimas",
+            "Clothing#\(qtdMeias) Meias",
+            "Clothing#\(qtdCalcas) Calças",
+            "Clothing#\(qtdPijamas) Pijamas"
+        ]
+
+        // Extras de clima
         switch classificacao {
         case "FRIO":
-            extrasClima = """
-            Clothing#1 Casaco pesado
-            Clothing#1 Luvas
-            Clothing#1 Cachecol
-            Clothing#1 Gorro
-            Footwear#1 Bota impermeável
-            """
+            linhasBase += [
+                "Clothing#1 Casaco pesado",
+                "Clothing#1 Luvas",
+                "Clothing#1 Cachecol",
+                "Clothing#1 Gorro",
+                "Footwear#1 Bota impermeável"
+            ]
         case "QUENTE":
-            extrasClima = """
-            Clothing#1 Boné
-            Clothing#2 Roupas de banho
-            Toiletries#Protetor solar FPS 50+
-            """
-        default: // AMENO
-            extrasClima = "Clothing#1 Casaco leve"
+            linhasBase += [
+                "Clothing#1 Boné",
+                "Clothing#2 Roupas de banho",
+                "Toiletries#Protetor solar FPS 50+"
+            ]
+        default:
+            linhasBase.append("Clothing#1 Casaco leve")
         }
 
-        let documentos: String
+        // Footwear
+        linhasBase.append("Footwear#1 Tênis confortável")
+
+        // Documents
         if foraDoBrasil {
-            documentos = """
-            Documents#Passaporte
-            Documents#Seguro viagem
-            Documents#Comprovante de hospedagem
-            Documents#Passagens
-            Documents#Cartões
-            Documents#Dinheiro
-            Documents#Visto (se necessário)
-            """
+            linhasBase += [
+                "Documents#Passaporte",
+                "Documents#Seguro viagem",
+                "Documents#Comprovante de hospedagem",
+                "Documents#Passagens",
+                "Documents#Cartões",
+                "Documents#Dinheiro",
+                "Documents#Visto (se necessário)"
+            ]
         } else {
-            documentos = """
-            Documents#RG ou CNH
-            Documents#Passagens
-            Documents#Reservas
-            Documents#Cartões
-            Documents#Dinheiro
-            """
+            linhasBase += [
+                "Documents#RG ou CNH",
+                "Documents#Passagens",
+                "Documents#Reservas",
+                "Documents#Cartões",
+                "Documents#Dinheiro"
+            ]
+        }
+
+        // Toiletries
+        linhasBase += [
+            "Toiletries#Escova de dentes",
+            "Toiletries#Pasta de dentes",
+            "Toiletries#Shampoo",
+            "Toiletries#Condicionador",
+            "Toiletries#Sabonete",
+            "Toiletries#Desodorante",
+            "Toiletries#Perfume",
+            "Toiletries#Escova de cabelo",
+            "Toiletries#Lâmina de barbear",
+            "Toiletries#Lenços umedecidos"
+        ]
+
+        // Health & Meds
+        linhasBase += [
+            "Health & Meds#Analgésicos",
+            "Health & Meds#Antialérgico",
+            "Health & Meds#Remédio para gripe",
+            "Health & Meds#Curativo",
+            "Health & Meds#Álcool em gel",
+            "Health & Meds#Repelente"
+        ]
+
+        // Electronics
+        linhasBase += [
+            "Electronics#Celular",
+            "Electronics#Carregador de celular",
+            "Electronics#Fone de ouvido",
+            "Electronics#Power bank",
+            "Electronics#Adaptador de tomada"
+        ]
+
+        // Kids — itens para crianças (2–12 anos)
+        if numCriancas > 0 {
+            linhasBase += [
+                "Kids#\(numCriancas) Pijamas infantis",
+                "Kids#Roupas extras para as crianças",
+                "Kids#Protetor solar infantil",
+                "Kids#Remédios infantis (febre, dor)",
+                "Kids#Mochila infantil",
+                "Kids#Entretenimento (tablet, livros)"
+            ]
+        }
+
+        // Baby — itens para bebês (0–2 anos)
+        if numBebes > 0 {
+            let fraldas = numBebes * dias * 6   // ~6 fraldas/dia por bebê????????
+            linhasBase += [
+                "Baby#\(fraldas) Fraldas",
+                "Baby#Pomada para assaduras",
+                "Baby#Lenços umedecidos bebê",
+                "Baby#Mamadeira",
+                "Baby#Leite em pó",
+                "Baby#Termômetro",
+                "Baby#Roupas extras de bebê",
+                "Baby#Chupeta"
+            ]
+        }
+
+        //  todos os itens base
+        let itensBase = linhasBase.map { linha -> ItemMala in
+            var item = ItemMala(nome: linha)
+            let words = item.displayNome.split(separator: " ", maxSplits: 1)
+            if let first = words.first, let qty = Int(first) {
+                item.quantidade = max(1, qty)
+            }
+            return item
         }
 
         let instrucaoIA = """
-        Você é um gerador de checklist de mala de viagem.
-
-        FORMATO OBRIGATÓRIO — UM ITEM POR LINHA — NUNCA use vírgulas entre itens:
-        Categoria#N NomeDoItem    (com quantidade, ex: Clothing#3 Camisetas)
-        Categoria#NomeDoItem      (sem quantidade, ex: Documents#Passaporte)
-
-        CATEGORIAS: Documents, Clothing, Footwear, Toiletries, Health & Meds, Electronics
-        PROIBIDO: títulos, markdown (**), emojis, vírgulas entre itens, texto extra
+        Você é um assistente de viagem. Gere APENAS itens extras específicos para a viagem abaixo que NÃO sejam roupas comuns, documentos, higiene básica, eletrônicos básicos ou remédios básicos — esses já estão na lista.
 
         VIAGEM: \(destinoSelecionado) — \(dias) dias — \(climaResumo)
+        TIPO: \(tipoViagem.isEmpty ? "Lazer" : tipoViagem)
+        ATIVIDADES: \(atividades.isEmpty ? "Nenhuma especificada" : atividades)
 
-        INCLUA EXATAMENTE ESTES ITENS (copie linha por linha, sem alterar):
-        Clothing#\(qtdCamisetas) Camisetas
-        Clothing#\(qtdIntimas) Roupas íntimas
-        Clothing#\(qtdMeias) Meias
-        Clothing#\(qtdCalcas) Calças
-        Clothing#\(qtdPijamas) Pijamas
-        \(extrasClima)
-        \(documentos)
+        Exemplos do que gerar: equipamentos de esporte específicos, adaptadores especiais, itens culturais do destino.
+        Máximo 6 itens extras. Se não houver nada relevante, responda apenas: NENHUM
 
-        ALÉM DISSO, gere itens adequados ao destino e clima para:
-        - Footwear: 1 tênis confortável (calçados de clima já incluídos acima)
-        - Toiletries: escova de dentes, pasta de dentes, shampoo, condicionador, sabonete, desodorante, perfume, escova de cabelo, lâmina de barbear, lenços (itens de clima já incluídos acima)
-        - Health & Meds: analgésicos, antialérgico, remédio para gripe, curativo, álcool em gel, repelente
-        - Electronics: celular, carregadores, fone de ouvido, power bank, adaptador de tomada
-
-        Gere a lista COMPLETA agora.
+        FORMATO OBRIGATÓRIO — UM ITEM POR LINHA:
+        Categoria#NomeDoItem
+        CATEGORIAS PERMITIDAS: Clothing, Footwear, Toiletries, Health & Meds, Electronics
+        PROIBIDO: markdown, emojis, vírgulas entre itens, texto explicativo
         """
 
+        var itensExtras: [ItemMala] = []
         do {
             let session = LanguageModelSession(instructions: instrucaoIA)
-            let response = try await session.respond(to: "Gere a lista para \(destinoSelecionado).")
+            let response = try await session.respond(to: "Extras para \(destinoSelecionado).")
 
-            let linhas = response.content
-                .components(separatedBy: .newlines)
-                .flatMap { $0.components(separatedBy: ",") }
-                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                .filter { !$0.isEmpty && $0.contains("#") }
-
-            await MainActor.run {
-                itens = linhas.isEmpty
-                    ? [ItemMala(nome: "Erro#Tente gerar novamente")]
-                    : linhas.map { ItemMala(nome: $0) }
-                carregando = false
+            if !response.content.uppercased().contains("NENHUM") {
+                itensExtras = response.content
+                    .components(separatedBy: .newlines)
+                    .flatMap { $0.components(separatedBy: ",") }
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { linha in
+                        guard !linha.isEmpty, linha.contains("#"),
+                              let primeiro = linha.first else { return false }
+                        return primeiro.isUppercase
+                    }
+                    .map { linha -> ItemMala in
+                        var item = ItemMala(nome: linha)
+                        let words = item.displayNome.split(separator: " ", maxSplits: 1)
+                        if let first = words.first, let qty = Int(first) {
+                            item.quantidade = max(1, qty)
+                        }
+                        return item
+                    }
             }
-        } catch {
-            await MainActor.run { carregando = false }
+        } catch { }
+
+        await MainActor.run {
+            itens = itensBase + itensExtras
+            carregando = false
         }
     }
 }

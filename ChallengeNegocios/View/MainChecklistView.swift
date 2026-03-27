@@ -16,7 +16,8 @@ struct MainChecklistView: View {
 
     private let ordemCategorias = [
         "Documents", "Clothing", "Footwear",
-        "Toiletries", "Health & Meds", "Electronics", "Baby"
+        "Toiletries", "Health & Meds", "Electronics",
+        "Kids", "Baby"
     ]
 
     private var itensAgrupados: [String: [ItemMala]] {
@@ -228,6 +229,7 @@ struct MainChecklistView: View {
 
     private func itemRow(_ item: ItemMala) -> some View {
         HStack(spacing: 12) {
+            // Círculo de marcar
             Button {
                 vm.toggleItem(id: item.id)
             } label: {
@@ -236,19 +238,46 @@ struct MainChecklistView: View {
                     .foregroundColor(item.estaMarcado ? .primary : Color(.systemGray3))
             }
 
-            Text(item.displayNome)
+            Text(item.nomeApenas)
                 .font(.subheadline)
                 .strikethrough(item.estaMarcado, color: .secondary)
                 .foregroundColor(item.estaMarcado ? .secondary : .primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            Button {
-            } label: {
-                Image(systemName: "plus")
+            // Contador — / quantidade / +
+            HStack(spacing: 0) {
+                Button {
+                    vm.ajustarQuantidade(id: item.id, delta: -1)
+                } label: {
+                    Text("−")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(item.quantidade > 1 ? .primary : Color(.systemGray3))
+                        .frame(width: 32, height: 32)
+                }
+                .disabled(item.quantidade <= 1)
+
+                Divider().frame(height: 16)
+
+                Text("\(item.quantidade)")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .frame(minWidth: 28)
+
+                Divider().frame(height: 16)
+
+                Button {
+                    vm.ajustarQuantidade(id: item.id, delta: +1)
+                } label: {
+                    Text("+")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                        .frame(width: 32, height: 32)
+                }
             }
+            .background(Color(.systemGray6))
+            .cornerRadius(10)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 13)
