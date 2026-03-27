@@ -7,12 +7,11 @@
 
 import SwiftUI
 
-struct ItemMala: Identifiable {
-    let id = UUID()
+struct ItemMala: Identifiable, Codable {
+    var id: UUID = UUID()
     var nome: String
     var estaMarcado: Bool = false
 
-    // Formato esperado: "Categoria#Nome" ou "Categoria#N NomeDoItem"
     var categoria: String {
         nome.components(separatedBy: "#").first ?? "Geral"
     }
