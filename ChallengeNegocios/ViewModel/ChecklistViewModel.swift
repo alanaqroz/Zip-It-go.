@@ -68,17 +68,14 @@ class ChecklistViewModel {
 
         let dias = quantidadeDias
 
-        // ── 1. Quantidades de roupa pré-calculadas no Swift ──────────────
         let qtdCamisetas = min(dias + 1, 12)
         let qtdIntimas   = min(dias + 2, 20)
         let qtdMeias     = min(dias + 2, 15)
         let qtdCalcas    = max(1, Int(ceil(Double(dias) / 3.0)))
         let qtdPijamas   = max(1, Int(ceil(Double(dias) / 4.0)))
 
-        // ── 2. Detecção de país (geocoder — muito confiável) ─────────────
         var isoCode = await WeatherService.shared.buscarCodigoPais(destino: destinoSelecionado)
 
-        // ── 3. Clima real via WeatherKit ──────────────────────────────────
         var classificacao = "AMENO"
         var climaResumo   = ""
 
@@ -105,7 +102,6 @@ class ChecklistViewModel {
 
         let foraDoBrasil = isoCode.uppercased() != "BR" && !isoCode.isEmpty
 
-        // ── 4. Extras de clima já determinados pelo WeatherKit ────────────
         let extrasClima: String
         switch classificacao {
         case "FRIO":
@@ -126,7 +122,6 @@ class ChecklistViewModel {
             extrasClima = "Clothing#1 Casaco leve"
         }
 
-        // ── 5. Documentos baseados no país real ───────────────────────────
         let documentos: String
         if foraDoBrasil {
             documentos = """
@@ -148,7 +143,6 @@ class ChecklistViewModel {
             """
         }
 
-        // ── 6. Prompt sem regras de cálculo — tudo já vem pronto ─────────
         let instrucaoIA = """
         Você é um gerador de checklist de mala de viagem.
 

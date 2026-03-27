@@ -22,7 +22,6 @@ struct ClimaViagem {
 
     var estaForaDoBrasil: Bool { isoCountryCode.uppercased() != "BR" }
 
-    /// "FRIO", "QUENTE" ou "AMENO" — sem texto extra
     var classificacao: String {
         switch temperaturaMedia {
         case ..<15:  return "FRIO"
@@ -112,7 +111,6 @@ actor WeatherService {
         )
     }
 
-    /// Retorna o código ISO do país (ex: "BR") sem precisar buscar clima.
     func buscarCodigoPais(destino: String) async -> String {
         let geocoder = CLGeocoder()
         guard let placemarks = try? await geocoder.geocodeAddressString(destino),
