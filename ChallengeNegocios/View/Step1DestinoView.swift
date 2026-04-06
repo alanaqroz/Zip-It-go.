@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import PostHog
 
 struct Step1DestinoView: View {
     @Environment(OnboardingViewModel.self) private var vm
@@ -55,6 +56,7 @@ struct Step1DestinoView: View {
                                         vm.viagem.destino = sugestao.title
                                         locService.busca = sugestao.title
                                         locService.sugestoes = []
+                                        PostHogSDK.shared.capture("onboarding_destination_set", properties: ["destination": sugestao.title])
                                         UIApplication.shared.sendAction(
                                             #selector(UIResponder.resignFirstResponder),
                                             to: nil, from: nil, for: nil
@@ -137,6 +139,7 @@ struct Step1DestinoView: View {
 
             // MARK: Botão Continuar
             BotaoContinuarView(ativo: !vm.viagem.destino.isEmpty) {
+                PostHogSDK.shared.capture("onboarding_step1_completed", properties: ["destination": vm.viagem.destino, "days": vm.viagem.quantidadeDias])
                 vm.avancar(para: 2)
             }
         }

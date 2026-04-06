@@ -43,6 +43,12 @@ struct Viagem: Identifiable, Codable {
     // Tela 5 — Lista gerada
     var itens: [ItemMala] = []
 
+    // Clima (salvo junto com a viagem)
+    var tempMin: Double? = nil
+    var tempMax: Double? = nil
+    var condicaoClima: String = ""
+    var estacao: String = ""
+
     // Controle
     var criadaEm: Date = Date()
 

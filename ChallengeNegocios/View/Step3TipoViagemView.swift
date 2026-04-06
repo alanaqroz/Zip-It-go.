@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PostHog
 
 // MARK: - Dados das categorias
 
@@ -122,6 +123,12 @@ struct Step3TipoViagemView: View {
         }
         .safeAreaInset(edge: .bottom) {
             BotaoContinuarView(ativo: true) {
+                PostHogSDK.shared.capture("onboarding_step3_completed", properties: [
+                    "trip_type": vm.viagem.tipoViagem.rawValue,
+                    "activities": vm.viagem.atividades,
+                    "activities_count": vm.viagem.atividades.count,
+                    "has_custom_activity": !vm.viagem.outraAtividade.isEmpty
+                ])
                 vm.avancar(para: 4)
             }
         }

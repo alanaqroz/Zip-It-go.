@@ -1,0 +1,67 @@
+[
+  {
+    "event": "onboarding_destination_set",
+    "description": "User selects a destination from the autocomplete suggestions in Step 1",
+    "file": "ChallengeNegocios/View/Step1DestinoView.swift"
+  },
+  {
+    "event": "onboarding_step1_completed",
+    "description": "User confirms destination and travel dates and advances to Step 2",
+    "file": "ChallengeNegocios/View/Step1DestinoView.swift"
+  },
+  {
+    "event": "onboarding_step2_completed",
+    "description": "User confirms traveler group type and counts (adults, children, babies) and advances to Step 3",
+    "file": "ChallengeNegocios/View/Step2ViajantesView.swift"
+  },
+  {
+    "event": "onboarding_step3_completed",
+    "description": "User confirms trip type (lazer/negocios) and activities and advances to Step 4",
+    "file": "ChallengeNegocios/View/Step3TipoViagemView.swift"
+  },
+  {
+    "event": "onboarding_section_edited",
+    "description": "User taps Editar on a confirmation section to go back and edit it",
+    "file": "ChallengeNegocios/View/Step4ConfirmacaoView.swift"
+  },
+  {
+    "event": "trip_list_generation_started",
+    "description": "User taps Gerar lista on the confirmation screen, triggering list generation",
+    "file": "ChallengeNegocios/View/Step4ConfirmacaoView.swift"
+  },
+  {
+    "event": "trip_weather_fetch_failed",
+    "description": "Weather API call fails during list generation; falls back to month-based logic",
+    "file": "ChallengeNegocios/ViewModel/ChecklistViewModel.swift"
+  },
+  {
+    "event": "trip_ai_generation_failed",
+    "description": "AI (LanguageModelSession) call fails during list generation of extra items",
+    "file": "ChallengeNegocios/ViewModel/ChecklistViewModel.swift"
+  },
+  {
+    "event": "trip_list_generated",
+    "description": "Packing list generation completes successfully with total item count",
+    "file": "ChallengeNegocios/ViewModel/ChecklistViewModel.swift"
+  },
+  {
+    "event": "trip_saved",
+    "description": "User taps Salvar and the trip with its packing list is persisted to the store",
+    "file": "ChallengeNegocios/View/Step5GerarListaView.swift"
+  },
+  {
+    "event": "checklist_item_toggled",
+    "description": "User checks or unchecks a packing list item",
+    "file": "ChallengeNegocios/View/MainChecklistView.swift"
+  },
+  {
+    "event": "checklist_item_quantity_changed",
+    "description": "User taps + or - to change item quantity in the packing list",
+    "file": "ChallengeNegocios/View/MainChecklistView.swift"
+  },
+  {
+    "event": "checklist_custom_item_added",
+    "description": "User adds a custom item to a category via the Add alert",
+    "file": "ChallengeNegocios/View/MainChecklistView.swift"
+  }
+]

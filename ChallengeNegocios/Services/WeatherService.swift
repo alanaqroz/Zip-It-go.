@@ -66,21 +66,31 @@ actor WeatherService {
 
         let latitude = location.coordinate.latitude
 
-        // 2. Intervalo de datas
-        let dataFim = Calendar.current.date(
-            byAdding: .day, value: max(quantidadeDias, 1), to: dataInicio
-        ) ?? dataInicio
+        // 2. Verifica se a viagem está dentro da janela do WeatherKit (~10 dias)
+        let diasAteViagem = Calendar.current.dateComponents([.day], from: Date(), to: dataInicio).day ?? 0
+        guard diasAteViagem <= 9 else {
+            throw WeatherServiceError.semDados
+        }
 
-        // 3. Previsão diária via WeatherKit
+        // 3. Normaliza para início do dia (WeatherKit rejeita timestamps com hora exata)
+        let cal = Calendar.current
+        let inicioDia = cal.startOfDay(for: dataInicio)
+        let dataFim   = cal.startOfDay(
+            for: cal.date(byAdding: .day, value: max(quantidadeDias, 1), to: inicioDia) ?? inicioDia
+        )
+
+        print("🌤 WeatherKit buscando: \(destino) | \(inicioDia) → \(dataFim) | lat: \(latitude)")
+
+        // 4. Previsão diária via WeatherKit
         let previsao = try await kit.weather(
             for: location,
-            including: .daily(startDate: dataInicio, endDate: dataFim)
+            including: .daily(startDate: inicioDia, endDate: dataFim)
         )
 
         let dias = previsao.forecast
         guard !dias.isEmpty else { throw WeatherServiceError.semDados }
 
-        // 4. Temperaturas
+        // 5. Temperaturas
         let maximas = dias.map { $0.highTemperature.converted(to: .celsius).value }
         let minimas  = dias.map { $0.lowTemperature.converted(to: .celsius).value }
         let medias   = zip(maximas, minimas).map { ($0 + $1) / 2.0 }
@@ -89,12 +99,12 @@ actor WeatherService {
         let tempMax  = maximas.max() ?? 0
         let mediaGeral = medias.reduce(0, +) / Double(medias.count)
 
-        // 5. Condições únicas em português
+        // 6. Condições únicas em português
         let condicoes = Array(Set(dias.map { traduzirCondicao($0.condition) }))
             .prefix(3)
             .joined(separator: ", ")
 
-        // 6. Estação com base no mês de início e hemisfério
+        // 7. Estação com base no mês de início e hemisfério
         let mes = Calendar.current.component(.month, from: dataInicio)
         let estacao = detectarEstacao(mes: mes, latitude: latitude)
 

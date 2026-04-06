@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PostHog
 
 struct Step4ConfirmacaoView: View {
     @Environment(OnboardingViewModel.self) private var vm
@@ -27,6 +28,7 @@ struct Step4ConfirmacaoView: View {
 
                 // Seção 1 — Destino
                 ResumoSecaoView(titulo: "Destino") {
+                    PostHogSDK.shared.capture("onboarding_section_edited", properties: ["section": "destination"])
                     vm.editarEtapa(1)
                 } conteudo: {
                     ResumoLinhaView(texto: vm.viagem.destino.isEmpty ? "—" : vm.viagem.destino)
@@ -36,6 +38,7 @@ struct Step4ConfirmacaoView: View {
 
                 // Seção 2 — Viajantes
                 ResumoSecaoView(titulo: "Viajantes") {
+                    PostHogSDK.shared.capture("onboarding_section_edited", properties: ["section": "travelers"])
                     vm.editarEtapa(2)
                 } conteudo: {
                     ResumoLinhaView(texto: vm.viagem.tipoGrupo.rawValue)
@@ -46,6 +49,7 @@ struct Step4ConfirmacaoView: View {
 
                 // Seção 3 — Tipo e atividades
                 ResumoSecaoView(titulo: "Viagem") {
+                    PostHogSDK.shared.capture("onboarding_section_edited", properties: ["section": "trip_type"])
                     vm.editarEtapa(3)
                 } conteudo: {
                     ResumoLinhaView(texto: vm.viagem.tipoViagem.rawValue)
@@ -61,6 +65,12 @@ struct Step4ConfirmacaoView: View {
         }
         .safeAreaInset(edge: .bottom) {
             BotaoContinuarView(ativo: true, rotulo: "Gerar lista") {
+                PostHogSDK.shared.capture("trip_list_generation_started", properties: [
+                    "destination": vm.viagem.destino,
+                    "days": vm.viagem.quantidadeDias,
+                    "trip_type": vm.viagem.tipoViagem.rawValue,
+                    "group_type": vm.viagem.tipoGrupo.rawValue
+                ])
                 vm.avancar(para: 5)
             }
         }

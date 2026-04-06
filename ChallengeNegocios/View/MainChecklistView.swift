@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PostHog
 
 struct MainChecklistView: View {
     var vm: ChecklistViewModel
@@ -13,6 +14,29 @@ struct MainChecklistView: View {
     @State private var mostraAdicionarItem = false
     @State private var categoriaParaAdicionar = ""
     @State private var nomeNovoItem = ""
+
+    private var textoCompartilhavel: String {
+        var linhas: [String] = []
+        linhas.append("Mala — \(vm.destinoSelecionado)")
+        linhas.append(vm.periodoFormatado)
+        if !vm.estacao.isEmpty {
+            let clima = vm.tempMin != nil
+                ? "\(Int(vm.tempMin!))°C - \(Int(vm.tempMax!))°C, \(vm.estacao)"
+                : vm.estacao
+            linhas.append("Clima: \(clima)")
+        }
+        linhas.append("")
+        for cat in categoriasOrdenadas {
+            let itens = itensAgrupados[cat] ?? []
+            linhas.append("── \(cat.uppercased()) ──")
+            for item in itens {
+                let check = item.estaMarcado ? "✓" : "○"
+                linhas.append("\(check) \(item.nomeApenas) (\(item.quantidade))")
+            }
+            linhas.append("")
+        }
+        return linhas.joined(separator: "\n")
+    }
 
     private let ordemCategorias = [
         "Documents", "Clothing", "Footwear",
@@ -40,7 +64,7 @@ struct MainChecklistView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         headerSection
-                        if vm.tempMin != nil { weatherCard }
+                        if vm.tempMin != nil || !vm.estacao.isEmpty { weatherCard }
                         progressSection
                         ForEach(categoriasOrdenadas, id: \.self) { cat in
                             categorySection(cat, items: itensAgrupados[cat] ?? [])
@@ -53,10 +77,29 @@ struct MainChecklistView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Menu {
+                    ShareLink(
+                        item: textoCompartilhavel,
+                        preview: SharePreview("Mala — \(vm.destinoSelecionado)")
+                    ) {
+                        Label("Compartilhar lista", systemImage: "square.and.arrow.up")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .fontWeight(.semibold)
+                }
+            }
+        }
         .alert("Adicionar a \(categoriaParaAdicionar)", isPresented: $mostraAdicionarItem) {
             TextField("Nome do item", text: $nomeNovoItem)
             Button("Adicionar") {
                 vm.adicionarItem(categoria: categoriaParaAdicionar, nome: nomeNovoItem)
+                PostHogSDK.shared.capture("checklist_custom_item_added", properties: [
+                    "category": categoriaParaAdicionar,
+                    "item": nomeNovoItem
+                ])
                 nomeNovoItem = ""
             }
             Button("Cancelar", role: .cancel) { nomeNovoItem = "" }
@@ -97,16 +140,15 @@ struct MainChecklistView: View {
 
     // MARK: - Weather Card
 
-    @ViewBuilder
     private var weatherCard: some View {
-        if let tMin = vm.tempMin, let tMax = vm.tempMax {
-            HStack(alignment: .center) {
-                HStack(spacing: 12) {
-                    Image(systemName: weatherIcon)
-                        .font(.title2)
-                        .foregroundColor(weatherIconColor)
+        HStack(alignment: .center) {
+            HStack(spacing: 12) {
+                Image(systemName: weatherIcon)
+                    .font(.title2)
+                    .foregroundColor(weatherIconColor)
 
-                    VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 3) {
+                    if let tMin = vm.tempMin, let tMax = vm.tempMax {
                         HStack(spacing: 6) {
                             Text("\(Int(tMin))°C")
                                 .font(.headline)
@@ -117,26 +159,30 @@ struct MainChecklistView: View {
                                 .font(.headline)
                                 .fontWeight(.semibold)
                         }
-                        if !vm.condicaoClima.isEmpty {
-                            Text(vm.condicaoClima.capitalized)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                    }
+                    if !vm.condicaoClima.isEmpty {
+                        Text(vm.condicaoClima.capitalized)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else if vm.tempMin == nil {
+                        Text("Clima estimado")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }
-
-                Spacer()
-
-                if !vm.estacao.isEmpty {
-                    Text(vm.estacao)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                }
             }
-            .padding(16)
-            .background(Color(.systemBackground))
-            .cornerRadius(16)
+
+            Spacer()
+
+            if !vm.estacao.isEmpty {
+                Text(vm.estacao)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+            }
         }
+        .padding(16)
+        .background(Color.appClimaFundo)
+        .cornerRadius(16)
     }
 
     private var weatherIcon: String {
@@ -179,7 +225,6 @@ struct MainChecklistView: View {
                                 : 0,
                             height: 6
                         )
-                        .animation(.easeInOut(duration: 0.3), value: vm.itensMarcados)
                 }
             }
             .frame(height: 6)
@@ -232,6 +277,10 @@ struct MainChecklistView: View {
             // Círculo de marcar
             Button {
                 vm.toggleItem(id: item.id)
+                PostHogSDK.shared.capture("checklist_item_toggled", properties: [
+                    "item": item.nomeApenas,
+                    "checked": !item.estaMarcado
+                ])
             } label: {
                 Image(systemName: item.estaMarcado ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
@@ -248,6 +297,10 @@ struct MainChecklistView: View {
             HStack(spacing: 0) {
                 Button {
                     vm.ajustarQuantidade(id: item.id, delta: -1)
+                    PostHogSDK.shared.capture("checklist_item_quantity_changed", properties: [
+                        "item": item.nomeApenas,
+                        "delta": -1
+                    ])
                 } label: {
                     Text("−")
                         .font(.subheadline)
@@ -268,6 +321,10 @@ struct MainChecklistView: View {
 
                 Button {
                     vm.ajustarQuantidade(id: item.id, delta: +1)
+                    PostHogSDK.shared.capture("checklist_item_quantity_changed", properties: [
+                        "item": item.nomeApenas,
+                        "delta": 1
+                    ])
                 } label: {
                     Text("+")
                         .font(.subheadline)
