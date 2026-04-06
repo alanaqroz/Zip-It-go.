@@ -16,6 +16,7 @@ extension Color {
     static let appBotaoFundo      = Color(.systemGray5)        // fundo do botão Continuar
     static let appBotaoTexto      = Color.primary              // texto do botão
     static let appTextoSecundario = Color.secondary            // textos auxiliares
+    static let appClimaFundo      = Color(.systemBackground)  // fundo do card de clima — altere aqui
 }
 
 // MARK: - Layout

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PostHog
 
 struct Step2ViajantesView: View {
     @Environment(OnboardingViewModel.self) private var vm
@@ -90,6 +91,12 @@ struct Step2ViajantesView: View {
             }
 
             BotaoContinuarView(ativo: true) {
+                PostHogSDK.shared.capture("onboarding_step2_completed", properties: [
+                    "group_type": vm.viagem.tipoGrupo.rawValue,
+                    "adults": vm.viagem.numAdultos,
+                    "children": vm.viagem.numCriancas,
+                    "babies": vm.viagem.numBebes
+                ])
                 vm.avancar(para: 3)
             }
         }

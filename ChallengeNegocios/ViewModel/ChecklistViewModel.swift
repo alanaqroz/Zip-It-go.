@@ -1,10 +1,12 @@
 //
 //  ChecklistViewModel.swift
-//  ChallengeNegocios
+//
+//  Created by Alana Queiroz on 26/03/26.
 //
 
 import Foundation
 import FoundationModels
+import PostHog
 
 @Observable
 class ChecklistViewModel {
@@ -112,6 +114,31 @@ class ChecklistViewModel {
             if !clima.isoCountryCode.isEmpty { isoCode = clima.isoCountryCode }
             climaResumo = "\(Int(clima.tempMin))°C a \(Int(clima.tempMax))°C, \(clima.estacao), \(clima.condicaoDescricao)"
         } catch {
+            print("🌤 WeatherKit ERRO: \(error)")
+            print("🌤 Tipo do erro: \(type(of: error))")
+            PostHogSDK.shared.capture("trip_weather_fetch_failed", properties: [
+                "destination": destinoSelecionado,
+                "error": error.localizedDescription
+            ])
+            let mes = Calendar.current.component(.month, from: dataIda)
+            let hemisferioSul = ["BR","AR","CL","AU","NZ","ZA","UY","PY","BO","PE"].contains(isoCode.uppercased())
+            let estacaoEstimada: String
+            if hemisferioSul {
+                switch mes {
+                case 12,1,2: estacaoEstimada = "Verão"
+                case 3,4,5:  estacaoEstimada = "Outono"
+                case 6,7,8:  estacaoEstimada = "Inverno"
+                default:      estacaoEstimada = "Primavera"
+                }
+            } else {
+                switch mes {
+                case 12,1,2: estacaoEstimada = "Inverno"
+                case 3,4,5:  estacaoEstimada = "Primavera"
+                case 6,7,8:  estacaoEstimada = "Verão"
+                default:      estacaoEstimada = "Outono"
+                }
+            }
+            await MainActor.run { estacao = estacaoEstimada }
             let fmt = DateFormatter()
             fmt.dateFormat = "MMMM"
             climaResumo = "mês \(fmt.string(from: dataIda))"
@@ -283,11 +310,22 @@ class ChecklistViewModel {
                         return item
                     }
             }
-        } catch { }
+        } catch {
+            PostHogSDK.shared.capture("trip_ai_generation_failed", properties: [
+                "destination": destinoSelecionado,
+                "error": error.localizedDescription
+            ])
+        }
 
         await MainActor.run {
             itens = itensBase + itensExtras
             carregando = false
         }
+        PostHogSDK.shared.capture("trip_list_generated", properties: [
+            "destination": destinoSelecionado,
+            "days": dias,
+            "items_count": itensBase.count + itensExtras.count,
+            "ai_extras_count": itensExtras.count
+        ])
     }
 }
