@@ -1,8 +1,7 @@
 //
 //  Step2ViajantesView.swift
-//  ChallengeNegocios
 //
-//  Created by Alana Queiroz on 26/03/26.
+//  Created by Alana Queiroz on 25/03/26.
 //
 
 import SwiftUI
@@ -10,101 +9,128 @@ import PostHog
 
 struct Step2ViajantesView: View {
     @Environment(OnboardingViewModel.self) private var vm
+    @Environment(\.dismiss) private var dismiss
+    @State private var temSelecao = false
 
     var body: some View {
         @Bindable var vm = vm
 
-        ZStack(alignment: .bottom) {
+        ZStack {
+            // MARK: Background
+            Image("AppFundaTelaPerguntas")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: AppLayout.espacamento) {
+                VStack(alignment: .leading, spacing: 0) {
 
-                    StepIndicatorView(etapaAtual: 2, totalEtapas: 4)
+                    // MARK: Linha topo: botão voltar + indicador
+                    HStack(alignment: .center) {
+                        Button { dismiss() } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(width: 40, height: 40)
+                                .foregroundColor(.primary)
+                        }
+                        .glassEffect(in: Circle())
 
-                    // Título
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Quem vai viajar?")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        Text("Textinho explicativo.")
-                            .font(.subheadline)
-                            .foregroundColor(.appTextoSecundario)
+                        Spacer()
+
+                        StepIndicatorView(etapaAtual: 2, totalEtapas: 4)
+                            .frame(maxWidth: 160)
+
+                        Spacer()
+
+                        // Espaço espelho para balancear o botão voltar
+                        Color.clear.frame(width: 40, height: 40)
                     }
+                    .padding(.bottom, 24)
 
-                    // Seleção Solo / Grupo
-                    HStack(spacing: 12) {
+                    // MARK: Título
+                    Text("How are you traveling?")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(.primary)
+
+                    Text("Choose your profile so we can personalize your experience.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 8)
+                        .padding(.bottom, 24)
+
+                    // MARK: Cards Solo / Group
+                    HStack(spacing: 18) {
                         TipoGrupoCardView(
                             icone: "person.fill",
                             titulo: "Solo",
-                            selecionado: vm.viagem.tipoGrupo == .solo
+                            selecionado: temSelecao && vm.viagem.tipoGrupo == .solo
                         ) {
                             vm.viagem.tipoGrupo = .solo
+                            temSelecao = true
                         }
 
                         TipoGrupoCardView(
                             icone: "person.3.fill",
-                            titulo: "Grupo",
-                            selecionado: vm.viagem.tipoGrupo == .grupo
+                            titulo: "Group",
+                            selecionado: temSelecao && vm.viagem.tipoGrupo == .grupo
                         ) {
                             vm.viagem.tipoGrupo = .grupo
-                            // Garante ao menos 1 adulto no grupo
                             if vm.viagem.numAdultos < 1 { vm.viagem.numAdultos = 1 }
+                            temSelecao = true
                         }
                     }
 
-                    // Contadores — aparecem apenas quando Grupo está selecionado
+                    // MARK: Contadores (apenas modo Grupo)
                     if vm.viagem.tipoGrupo == .grupo {
                         VStack(spacing: 0) {
                             ContadorView(
-                                titulo: "Adultos",
-                                descricao: "Com 13 anos ou mais",
+                                titulo: "Adults",
+                                descricao: "13 years or older",
                                 valor: $vm.viagem.numAdultos,
                                 minimo: 1
                             )
-
                             Divider().padding(.leading, AppLayout.espacamento)
-
                             ContadorView(
-                                titulo: "Crianças",
-                                descricao: "Idades entre 2 e 12",
+                                titulo: "Children",
+                                descricao: "Ages 2 to 12",
                                 valor: $vm.viagem.numCriancas,
                                 minimo: 0
                             )
-
                             Divider().padding(.leading, AppLayout.espacamento)
-
                             ContadorView(
-                                titulo: "Bebês",
-                                descricao: "Menos de 2 anos",
+                                titulo: "Babies",
+                                descricao: "Under 2 years",
                                 valor: $vm.viagem.numBebes,
                                 minimo: 0
                             )
                         }
-                        .background(Color.appFundoSecundario)
+                        .background(.regularMaterial)
                         .cornerRadius(AppLayout.raioCantos)
+                        .padding(.top, 24)
                     }
-
-                    Spacer(minLength: 100)
                 }
                 .padding(.horizontal, AppLayout.espacamento)
-                .padding(.top, AppLayout.espacamento)
+                .padding(.top, 80)
+                .padding(.bottom, AppLayout.alturaBotao + 24)
             }
-
-            BotaoContinuarView(ativo: true) {
-                PostHogSDK.shared.capture("onboarding_step2_completed", properties: [
-                    "group_type": vm.viagem.tipoGrupo.rawValue,
-                    "adults": vm.viagem.numAdultos,
-                    "children": vm.viagem.numCriancas,
-                    "babies": vm.viagem.numBebes
-                ])
-                vm.avancar(para: 3)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                BotaoContinuarView(ativo: temSelecao) {
+                    PostHogSDK.shared.capture("onboarding_step2_completed", properties: [
+                        "group_type": vm.viagem.tipoGrupo.rawValue,
+                        "adults": vm.viagem.numAdultos,
+                        "children": vm.viagem.numCriancas,
+                        "babies": vm.viagem.numBebes
+                    ])
+                    vm.avancar(para: 3)
+                }
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
-// MARK: - Card Solo / Grupo
+// MARK: - Card usando imagem do asset
 
 private struct TipoGrupoCardView: View {
     let icone: String
@@ -114,20 +140,28 @@ private struct TipoGrupoCardView: View {
 
     var body: some View {
         Button(action: acao) {
-            VStack(spacing: 10) {
-                Image(systemName: icone)
-                    .font(.title2)
-                    .foregroundColor(selecionado ? .appBotaoTexto : .appTextoSecundario)
-                Text(titulo)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(selecionado ? .appBotaoTexto : .appTextoSecundario)
+            ZStack {
+                // Fundo — troca de asset ao selecionar, responsivo via GeometryReader
+                Image(selecionado ? "CardFundoSelect" : "CardFundoNormal")
+                    .resizable()
+                    .aspectRatio(1, contentMode: .fill)
+
+                // Conteúdo vetorial sobreposto
+                VStack(spacing: 10) {
+                    Image(systemName: icone)
+                        .font(.system(size: 28, weight: .medium))
+                    Text(titulo)
+                        .font(.system(size: 17, weight: .semibold))
+                }
+                .foregroundStyle(.primary)
             }
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            // aspectRatio garante card quadrado em qualquer tela
+            .aspectRatio(1, contentMode: .fit)
+            // frame(maxWidth: .infinity) junto com o HStack divide o espaço igualmente
             .frame(maxWidth: .infinity)
-            .frame(height: 100)
-            .background(selecionado ? Color(.systemGray4) : Color.appFundoSecundario)
-            .cornerRadius(AppLayout.raioCantos)
         }
+        .buttonStyle(.plain)
     }
 }
 
@@ -145,37 +179,33 @@ private struct ContadorView: View {
                 Text(titulo)
                     .font(.subheadline)
                     .fontWeight(.medium)
+                    .foregroundStyle(.primary)
                 Text(descricao)
                     .font(.caption)
-                    .foregroundColor(.appTextoSecundario)
+                    .foregroundStyle(.secondary)
             }
-
             Spacer()
-
-            // Controles: número — botão_menos  número  botão_mais
             HStack(spacing: 16) {
                 Button {
                     if valor > minimo { valor -= 1 }
                 } label: {
                     Image(systemName: "minus")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(valor > minimo ? .primary : Color(.systemGray3))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(valor > minimo ? .primary : Color.primary.opacity(0.3))
                 }
                 .disabled(valor <= minimo)
 
                 Text("\(valor)")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
                     .frame(minWidth: 20, alignment: .center)
 
                 Button {
                     valor += 1
                 } label: {
                     Image(systemName: "plus")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
                 }
             }
         }

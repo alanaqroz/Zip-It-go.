@@ -11,6 +11,9 @@ struct Step6HomeView: View {
     @Environment(ViagemStore.self) private var store
     @Binding var mostraOnboarding: Bool
     @State private var busca = ""
+    @State private var showPaywall = false
+    @State private var showSubscription = false
+    @State private var manager = SubscriptionManager.shared
 
     private var hoje: Date { Calendar.current.startOfDay(for: Date()) }
 
@@ -46,9 +49,20 @@ struct Step6HomeView: View {
 
                             // Saudação
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Hi")
-                                    .font(.largeTitle)
-                                    .fontWeight(.bold)
+                                HStack(spacing: 8) {
+                                    Text("Hi")
+                                        .font(.largeTitle)
+                                        .fontWeight(.bold)
+                                    if manager.isPro { ProBadge() }
+                                    Spacer()
+                                    Button {
+                                        showSubscription = true
+                                    } label: {
+                                        Image(systemName: manager.isPro ? "person.crop.circle.fill.badge.checkmark" : "person.crop.circle")
+                                            .font(.title2)
+                                            .foregroundStyle(manager.isPro ? .purple : .secondary)
+                                    }
+                                }
 
                                 if proximaViagem != nil {
                                     Text("Sua próxima viagem é em **\(diasAteProxima) dias**. Pronta para montar a mala?")
@@ -58,6 +72,11 @@ struct Step6HomeView: View {
                                     Text("Nenhuma viagem próxima.\nQue tal criar uma nova?")
                                         .font(.body)
                                         .foregroundColor(.secondary)
+                                }
+
+                                if !manager.isPro {
+                                    UpgradeButton(showPaywall: $showPaywall)
+                                        .padding(.top, 4)
                                 }
                             }
 
@@ -94,6 +113,19 @@ struct Step6HomeView: View {
         }
         .safeAreaInset(edge: .bottom) {
             barraInferior
+        }
+        // ── Paywall sheet ──────────────────────────────────────────────────
+        .paywallSheet(isPresented: $showPaywall)
+        // ── Subscription management ────────────────────────────────────────
+        .sheet(isPresented: $showSubscription) {
+            NavigationStack {
+                SubscriptionStatusView()
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showSubscription = false }
+                        }
+                    }
+            }
         }
     }
 

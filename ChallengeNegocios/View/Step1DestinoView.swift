@@ -1,8 +1,7 @@
 //
 //  Step1DestinoView.swift
-//  ChallengeNegocios
 //
-//  Created by Alana Queiroz on 26/03/26.
+//  Created by Alana Queiroz on 25/03/26.
 //
 
 import SwiftUI
@@ -16,39 +15,62 @@ struct Step1DestinoView: View {
     var body: some View {
         @Bindable var vm = vm
 
-        ZStack(alignment: .bottom) {
+        ZStack {
+            // MARK: Background
+            Image("AppFundaTelaPerguntas")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
 
-            // MARK: Conteúdo rolável
+            // MARK: Conteúdo com botão
             ScrollView {
-                VStack(alignment: .leading, spacing: AppLayout.espacamento) {
+                VStack(alignment: .leading, spacing: 0) {
 
+                    // Indicador de etapas
                     StepIndicatorView(etapaAtual: 1, totalEtapas: 4)
+                        .padding(.bottom, 24)
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Para onde você vai?")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        Text("Textinho explicativo.")
-                            .font(.subheadline)
-                            .foregroundColor(.appTextoSecundario)
-                    }
+                    // Título
+                    Text("Where are you going?")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(.primary)
 
+                    // Subtítulo
+                    Text("Enter your destination and travel dates.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 8)
+                        .padding(.bottom, 24)
+
+                    // MARK: Seção DESTINATION
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Destino")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
+                        Label {
+                            Text("DESTINATION").tracking(0.8)
+                        } icon: {
+                            Image(systemName: "location.north.fill")
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
 
+                        // Campo de busca
                         HStack(spacing: 10) {
                             Image(systemName: "magnifyingglass")
-                                .foregroundColor(.appTextoSecundario)
-                            TextField("Onde você deseja ir?", text: $locService.busca)
-                                .autocorrectionDisabled()
+                                .foregroundStyle(.secondary)
+                            TextField(
+                                "",
+                                text: $locService.busca,
+                                prompt: Text("Search a destination...")
+                                    .foregroundColor(.secondary)
+                            )
+                            .foregroundStyle(.primary)
+                            .autocorrectionDisabled()
                         }
                         .padding(.horizontal, AppLayout.espacamentoInterno)
-                        .padding(.vertical, 13)
-                        .background(Color.appFundoSecundario)
+                        .padding(.vertical, 14)
+                        .background(.regularMaterial)
                         .cornerRadius(AppLayout.raioCantos)
 
+                        // Sugestões
                         if !locService.sugestoes.isEmpty && locService.busca != vm.viagem.destino {
                             VStack(alignment: .leading, spacing: 0) {
                                 ForEach(locService.sugestoes.prefix(5), id: \.self) { sugestao in
@@ -56,7 +78,8 @@ struct Step1DestinoView: View {
                                         vm.viagem.destino = sugestao.title
                                         locService.busca = sugestao.title
                                         locService.sugestoes = []
-                                        PostHogSDK.shared.capture("onboarding_destination_set", properties: ["destination": sugestao.title])
+                                        PostHogSDK.shared.capture("onboarding_destination_set",
+                                            properties: ["destination": sugestao.title])
                                         UIApplication.shared.sendAction(
                                             #selector(UIResponder.resignFirstResponder),
                                             to: nil, from: nil, for: nil
@@ -65,11 +88,11 @@ struct Step1DestinoView: View {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(sugestao.title)
                                                 .font(.subheadline)
-                                                .foregroundColor(.primary)
+                                                .foregroundStyle(.primary)
                                             if !sugestao.subtitle.isEmpty {
                                                 Text(sugestao.subtitle)
                                                     .font(.caption)
-                                                    .foregroundColor(.appTextoSecundario)
+                                                    .foregroundStyle(.secondary)
                                             }
                                         }
                                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -81,40 +104,36 @@ struct Step1DestinoView: View {
                                     }
                                 }
                             }
-                            .background(Color.appFundo)
+                            .background(.regularMaterial)
                             .cornerRadius(AppLayout.raioCantos)
-                            .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
                         }
                     }
+                    .padding(.bottom, 20)
 
-                    // Datas
+                    // MARK: Seção TRAVEL DATES
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Selecione a data")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
+                        Label {
+                            Text("TRAVEL DATES").tracking(0.8)
+                        } icon: {
+                            Image(systemName: "calendar")
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
 
                         VStack(spacing: 0) {
-                            // Ida
                             HStack {
-                                Image(systemName: "calendar")
-                                    .foregroundColor(.appTextoSecundario)
-                                    .frame(width: 20)
-                                Text("Ida")
+                                Text("Departure").foregroundStyle(.primary)
                                 Spacer()
                                 DatePicker("", selection: $vm.viagem.dataIda, displayedComponents: .date)
                                     .labelsHidden()
                             }
                             .padding(.horizontal, AppLayout.espacamentoInterno)
-                            .padding(.vertical, 13)
+                            .padding(.vertical, 14)
 
-                            Divider().padding(.leading, AppLayout.espacamentoInterno)
+                            Divider().padding(.horizontal, AppLayout.espacamentoInterno)
 
-                            // Volta
                             HStack {
-                                Image(systemName: "calendar")
-                                    .foregroundColor(.appTextoSecundario)
-                                    .frame(width: 20)
-                                Text("Volta")
+                                Text("Return").foregroundStyle(.primary)
                                 Spacer()
                                 DatePicker(
                                     "",
@@ -125,29 +144,34 @@ struct Step1DestinoView: View {
                                 .labelsHidden()
                             }
                             .padding(.horizontal, AppLayout.espacamentoInterno)
-                            .padding(.vertical, 13)
+                            .padding(.vertical, 14)
                         }
-                        .background(Color.appFundoSecundario)
+                        .background(.regularMaterial)
                         .cornerRadius(AppLayout.raioCantos)
                     }
-
-                    Spacer(minLength: 100)
                 }
                 .padding(.horizontal, AppLayout.espacamento)
-                .padding(.top, AppLayout.espacamento)
+                .padding(.top, 80)
+                .padding(.bottom, AppLayout.alturaBotao + 60)
             }
-
-            // MARK: Botão Continuar
-            BotaoContinuarView(ativo: !vm.viagem.destino.isEmpty) {
-                PostHogSDK.shared.capture("onboarding_step1_completed", properties: ["destination": vm.viagem.destino, "days": vm.viagem.quantidadeDias])
-                vm.avancar(para: 2)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                // MARK: Botão fixo no rodapé
+                BotaoContinuarView(ativo: !vm.viagem.destino.isEmpty) {
+                    PostHogSDK.shared.capture("onboarding_step1_completed", properties: [
+                        "destination": vm.viagem.destino,
+                        "days": vm.viagem.quantidadeDias
+                    ])
+                    vm.avancar(para: 2)
+                }
             }
         }
         .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
-// MARK: - Componentes compartilhados entre as telas
+// MARK: - StepIndicatorView
+
 struct StepIndicatorView: View {
     let etapaAtual: Int
     let totalEtapas: Int
@@ -156,35 +180,47 @@ struct StepIndicatorView: View {
         HStack(spacing: 6) {
             ForEach(1...totalEtapas, id: \.self) { i in
                 RoundedRectangle(cornerRadius: AppLayout.alturaIndicador / 2)
-                    .fill(i <= etapaAtual ? Color.appDestaque : Color(.systemGray4))
-                    .frame(width: i == etapaAtual ? 32 : 20, height: AppLayout.alturaIndicador)
+                    .fill(i <= etapaAtual ? Color("Button") : Color.primary.opacity(0.25))
+                    .frame(width: 20, height: AppLayout.alturaIndicador)
             }
-            Spacer()
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 }
 
+// MARK: - BotaoContinuarView
+
 struct BotaoContinuarView: View {
     let ativo: Bool
-    var rotulo: String = "Continuar"
+    var rotulo: String = "Continue"
     let acao: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            Button(action: acao) {
-                Text(rotulo)
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: AppLayout.alturaBotao)
-                    .background(ativo ? Color.appBotaoFundo : Color(.systemGray5))
-                    .foregroundColor(ativo ? .appBotaoTexto : .appTextoSecundario)
-                    .cornerRadius(AppLayout.raioCantos)
-            }
-            .disabled(!ativo)
-            .padding(.horizontal, AppLayout.espacamento)
-            .padding(.top, 12)
-            .padding(.bottom, 28)
+        Button(action: acao) {
+            Text(rotulo)
+                .font(.headline)
+                .fontWeight(.bold)
+                .frame(maxWidth: .infinity)
+                .frame(height: AppLayout.alturaBotao)
+                .background(
+                    ativo ? Color("Button") : Color.primary.opacity(0.12)
+                )
+                .foregroundStyle(
+                    ativo ? Color("ButtonLabel") : Color.primary.opacity(0.35)
+                )
+                .cornerRadius(AppLayout.raioBotao)
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppLayout.raioBotao)
+                        .strokeBorder(
+                            ativo ? Color("StrokeButtonDark") : Color.clear,
+                            lineWidth: 1
+                        )
+                )
         }
-        .background(.ultraThinMaterial)
+        .disabled(!ativo)
+        .padding(.horizontal, AppLayout.espacamento)
+        .padding(.top, 12)
+        .padding(.bottom, 28)
+        .ignoresSafeArea(.container, edges: .bottom)
     }
 }

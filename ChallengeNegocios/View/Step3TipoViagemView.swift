@@ -17,61 +17,98 @@ private struct CategoriaAtividade {
 }
 
 private let categorias: [CategoriaAtividade] = [
-    CategoriaAtividade(nome: "Natureza",  icone: "leaf.circle.fill",       itens: ["Praia", "Trilha", "Camping", "Cachoeira", "Ciclismo", "Montanhismo"]),
-    CategoriaAtividade(nome: "Eventos",   icone: "film",                   itens: ["Shows", "Festivais", "Museus", "Teatro", "Exposições", "Parques"]),
-    CategoriaAtividade(nome: "Esportes",  icone: "figure.run.circle.fill", itens: ["Surf", "Mergulho", "Ski", "Futebol", "Tênis", "Natação"])
+    CategoriaAtividade(nome: "Nature",  icone: "leaf.circle.fill",       itens: ["Beach", "Hiking", "Camping", "Waterfall", "Cycling", "Mountaineering"]),
+    CategoriaAtividade(nome: "Events",  icone: "film",                   itens: ["Shows", "Festivals", "Museums", "Theater", "Exhibitions", "Parks"]),
+    CategoriaAtividade(nome: "Sports",  icone: "figure.run.circle.fill", itens: ["Surf", "Diving", "Ski", "Soccer", "Tennis", "Swimming"])
 ]
 
 // MARK: - Tela 3
 
 struct Step3TipoViagemView: View {
     @Environment(OnboardingViewModel.self) private var vm
+    @Environment(\.dismiss) private var dismiss
     @State private var abertas: Set<String> = []
+    @State private var temSelecao = false
 
     var body: some View {
         @Bindable var vm = vm
 
-        ScrollView {
-            VStack(alignment: .leading, spacing: AppLayout.espacamento) {
+        ZStack {
+            // MARK: Background (Mantido o original como você pediu)
+            Image("AppFundaTelaPerguntas")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
 
-                    StepIndicatorView(etapaAtual: 3, totalEtapas: 4)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
 
-                    // Título
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Tipo de viagem")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        Text("Escolha qual o propósito da sua viagem")
-                            .font(.subheadline)
-                            .foregroundColor(.appTextoSecundario)
+                    // MARK: Linha topo: botão voltar + indicador
+                    HStack(alignment: .center) {
+                        Button { dismiss() } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(width: 40, height: 40)
+                                .foregroundColor(.primary)
+                        }
+                        .glassEffect(in: Circle())
+
+                        Spacer()
+
+                        StepIndicatorView(etapaAtual: 3, totalEtapas: 4)
+                            .frame(maxWidth: 160)
+
+                        Spacer()
+
+                        Color.clear.frame(width: 40, height: 40)
                     }
+                    .padding(.bottom, 24)
 
-                    // Cards Lazer / Negócios
-                    HStack(spacing: 12) {
+                    // MARK: Título
+                    Text("Trip Type")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(.primary)
+
+                    Text("Choose the purpose of your trip.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 8)
+                        .padding(.bottom, 24)
+
+                    // MARK: Cards Leisure / Business
+                    HStack(spacing: 18) {
                         TipoViagemCardView(
                             icone: "sun.horizon.fill",
-                            titulo: "Lazer",
-                            selecionado: vm.viagem.tipoViagem == .lazer
-                        ) { vm.viagem.tipoViagem = .lazer }
+                            titulo: "Leisure",
+                            selecionado: temSelecao && vm.viagem.tipoViagem == .lazer
+                        ) {
+                            vm.viagem.tipoViagem = .lazer
+                            temSelecao = true
+                        }
 
                         TipoViagemCardView(
                             icone: "briefcase.fill",
-                            titulo: "Negócios",
-                            selecionado: vm.viagem.tipoViagem == .negocios
-                        ) { vm.viagem.tipoViagem = .negocios }
+                            titulo: "Business",
+                            selecionado: temSelecao && vm.viagem.tipoViagem == .negocios
+                        ) {
+                            vm.viagem.tipoViagem = .negocios
+                            temSelecao = true
+                        }
                     }
+                    .padding(.bottom, 32)
 
-                    // Atividades
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Atividades")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        Text("Expanda as categorias e escolha o que deseja fazer.")
-                            .font(.subheadline)
-                            .foregroundColor(.appTextoSecundario)
-                    }
+                    // MARK: Título Atividades
+                    Text("Activities")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(.primary)
 
-                    // Accordion de categorias
+                    Text("Expand categories and choose what you'd like to do.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 8)
+                        .padding(.bottom, 16)
+
+                    // MARK: Accordion de categorias
                     VStack(spacing: 12) {
                         ForEach(categorias, id: \.nome) { categoria in
                             CategoriaAccordionView(
@@ -79,14 +116,12 @@ struct Step3TipoViagemView: View {
                                 aberta: abertas.contains(categoria.nome),
                                 selecionadas: vm.viagem.atividades
                             ) {
-                                // Abre / fecha
                                 if abertas.contains(categoria.nome) {
                                     abertas.remove(categoria.nome)
                                 } else {
                                     abertas.insert(categoria.nome)
                                 }
                             } onToggleItem: { item in
-                                // Seleciona / deseleciona chip
                                 if vm.viagem.atividades.contains(item) {
                                     vm.viagem.atividades.removeAll { $0 == item }
                                 } else {
@@ -95,48 +130,51 @@ struct Step3TipoViagemView: View {
                             }
                         }
                     }
+                    .padding(.bottom, 24)
 
-                    // Outra atividade
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Outra atividade?")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
+                    // MARK: Outra atividade
+                    Text("Something else?")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                        .padding(.bottom, 8)
 
-                        TextField("Ex. Fotografia, jantar formal...", text: $vm.viagem.outraAtividade, axis: .vertical)
-                            .lineLimit(3...5)
-                            .padding(AppLayout.espacamentoInterno)
-                            .background(Color.appFundoSecundario)
-                            .cornerRadius(AppLayout.raioCantos)
-                    }
-
-                    Spacer(minLength: 100)
+                    TextField(
+                        "",
+                        text: $vm.viagem.outraAtividade,
+                        prompt: Text("E.g. Photography, formal dinner...")
+                            .foregroundColor(.secondary),
+                        axis: .vertical
+                    )
+                    .lineLimit(3...5)
+                    .foregroundStyle(.primary)
+                    .padding(AppLayout.espacamentoInterno)
+                    .background(.regularMaterial)
+                    .cornerRadius(AppLayout.raioCantos)
                 }
                 .padding(.horizontal, AppLayout.espacamento)
-                .padding(.top, AppLayout.espacamento)
-        }
-        .scrollDismissesKeyboard(.immediately)
-        .onTapGesture {
-            UIApplication.shared.sendAction(
-                #selector(UIResponder.resignFirstResponder),
-                to: nil, from: nil, for: nil
-            )
-        }
-        .safeAreaInset(edge: .bottom) {
-            BotaoContinuarView(ativo: true) {
-                PostHogSDK.shared.capture("onboarding_step3_completed", properties: [
-                    "trip_type": vm.viagem.tipoViagem.rawValue,
-                    "activities": vm.viagem.atividades,
-                    "activities_count": vm.viagem.atividades.count,
-                    "has_custom_activity": !vm.viagem.outraAtividade.isEmpty
-                ])
-                vm.avancar(para: 4)
+                .padding(.top, 80)
+                .padding(.bottom, AppLayout.alturaBotao + 24)
+            }
+            .scrollDismissesKeyboard(.immediately)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                BotaoContinuarView(ativo: temSelecao) {
+                    PostHogSDK.shared.capture("onboarding_step3_completed", properties: [
+                        "trip_type": vm.viagem.tipoViagem.rawValue,
+                        "activities": vm.viagem.atividades,
+                        "activities_count": vm.viagem.atividades.count,
+                        "has_custom_activity": !vm.viagem.outraAtividade.isEmpty
+                    ])
+                    vm.avancar(para: 4)
+                }
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
-// MARK: - Card Lazer / Negócios
+// MARK: - Card Leisure / Business
 
 private struct TipoViagemCardView: View {
     let icone: String
@@ -146,20 +184,24 @@ private struct TipoViagemCardView: View {
 
     var body: some View {
         Button(action: acao) {
-            VStack(spacing: 10) {
-                Image(systemName: icone)
-                    .font(.title2)
-                    .foregroundColor(selecionado ? .primary : .appTextoSecundario)
-                Text(titulo)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(selecionado ? .primary : .appTextoSecundario)
+            ZStack {
+                Image(selecionado ? "TipoViagemFundoSelect" : "TipoViagemFundoNormal")
+                    .resizable()
+                    .scaledToFill()
+
+                VStack(spacing: 10) {
+                    Image(systemName: icone)
+                        .font(.system(size: 28, weight: .medium))
+                    Text(titulo)
+                        .font(.system(size: 17, weight: .semibold))
+                }
+                .foregroundColor(.primary)
             }
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .aspectRatio(5/3, contentMode: .fit)
             .frame(maxWidth: .infinity)
-            .frame(height: 100)
-            .background(selecionado ? Color(.systemGray4) : Color.appFundoSecundario)
-            .cornerRadius(AppLayout.raioCantos)
         }
+        .buttonStyle(.plain)
     }
 }
 
@@ -172,30 +214,25 @@ private struct CategoriaAccordionView: View {
     let onToggle: () -> Void
     let onToggleItem: (String) -> Void
 
-    private var resumo: String {
-        let itensAtivos = categoria.itens.filter { selecionadas.contains($0) }
-        return itensAtivos.isEmpty ? "Nenhuma atividade selecionada" : itensAtivos.joined(separator: ", ")
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
 
-            // toca pra abrir/fechar
             Button(action: onToggle) {
                 HStack(spacing: 12) {
                     Image(systemName: categoria.icone)
                         .font(.title3)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(Color("Icon"))
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(categoria.nome)
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         if !aberta {
-                            Text(resumo)
+                            let itensAtivos = categoria.itens.filter { selecionadas.contains($0) }
+                            Text(itensAtivos.isEmpty ? "No activities selected yet" : itensAtivos.joined(separator: ", "))
                                 .font(.caption)
-                                .foregroundColor(.appTextoSecundario)
+                                .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }
                     }
@@ -203,25 +240,31 @@ private struct CategoriaAccordionView: View {
                     Spacer()
 
                     Image(systemName: aberta ? "chevron.up" : "chevron.down")
-                        .font(.caption)
-                        .foregroundColor(.appTextoSecundario)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
                 }
                 .padding(AppLayout.espacamentoInterno)
             }
             .buttonStyle(.plain)
 
-            // Chips — visíveis só quando aberto
             if aberta {
-                ChipsFlowView(
-                    itens: categoria.itens,
-                    selecionados: selecionadas,
-                    onToggle: onToggleItem
-                )
-                .padding(.horizontal, AppLayout.espacamentoInterno)
-                .padding(.bottom, AppLayout.espacamentoInterno)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Selecione as opções:")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, AppLayout.espacamentoInterno)
+
+                    ChipsFlowView(
+                        itens: categoria.itens,
+                        selecionados: selecionadas,
+                        onToggle: onToggleItem
+                    )
+                    .padding(.horizontal, AppLayout.espacamentoInterno)
+                    .padding(.bottom, AppLayout.espacamentoInterno)
+                }
             }
         }
-        .background(Color.appFundoSecundario)
+        .background(.regularMaterial)
         .cornerRadius(AppLayout.raioCantos)
     }
 }
@@ -236,6 +279,7 @@ private struct ChipsFlowView: View {
     var body: some View {
         FlowLayout(spacing: 8) {
             ForEach(itens, id: \.self) { item in
+                let ativo = selecionados.contains(item)
                 Button {
                     onToggle(item)
                 } label: {
@@ -243,8 +287,8 @@ private struct ChipsFlowView: View {
                         .font(.subheadline)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(selecionados.contains(item) ? Color(.systemGray3) : Color(.systemGray5))
-                        .foregroundColor(.primary)
+                        .background(ativo ? Color("RoxoClaro") : Color.primary.opacity(0.10))
+                        .foregroundStyle(ativo ? Color.black : Color.primary)
                         .cornerRadius(20)
                 }
                 .buttonStyle(.plain)
