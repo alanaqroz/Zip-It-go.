@@ -7,11 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7CCC184B2F857BB100BDA324 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CCC184A2F857BB100BDA324 /* StoreKit.framework */; };
+		7CCC184E2F857C3000BDA324 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 7CCC184D2F857C3000BDA324 /* RevenueCat */; };
+		7CCC18502F857C3000BDA324 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 7CCC184F2F857C3000BDA324 /* RevenueCatUI */; };
 		A1B2C3D4E5F60789AB000003 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60789AB000002 /* PostHog */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		7C71A49B2F720E5700DEAAB5 /* ChallengeNegocios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ChallengeNegocios.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7CCC184A2F857BB100BDA324 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -27,7 +31,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7CCC18502F857C3000BDA324 /* RevenueCatUI in Frameworks */,
 				A1B2C3D4E5F60789AB000003 /* PostHog in Frameworks */,
+				7CCC184B2F857BB100BDA324 /* StoreKit.framework in Frameworks */,
+				7CCC184E2F857C3000BDA324 /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -38,6 +45,7 @@
 			isa = PBXGroup;
 			children = (
 				7C71A49D2F720E5700DEAAB5 /* ChallengeNegocios */,
+				7CCC18492F857BB100BDA324 /* Frameworks */,
 				7C71A49C2F720E5700DEAAB5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -48,6 +56,14 @@
 				7C71A49B2F720E5700DEAAB5 /* ChallengeNegocios.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		7CCC18492F857BB100BDA324 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				7CCC184A2F857BB100BDA324 /* StoreKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -71,6 +87,8 @@
 			name = ChallengeNegocios;
 			packageProductDependencies = (
 				A1B2C3D4E5F60789AB000002 /* PostHog */,
+				7CCC184D2F857C3000BDA324 /* RevenueCat */,
+				7CCC184F2F857C3000BDA324 /* RevenueCatUI */,
 			);
 			productName = ChallengeNegocios;
 			productReference = 7C71A49B2F720E5700DEAAB5 /* ChallengeNegocios.app */;
@@ -102,6 +120,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				A1B2C3D4E5F60789AB000001 /* XCRemoteSwiftPackageReference "posthog-ios" */,
+				7CCC184C2F857C3000BDA324 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7C71A49C2F720E5700DEAAB5 /* Products */;
@@ -366,6 +385,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		7CCC184C2F857C3000BDA324 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.67.1;
+			};
+		};
 		A1B2C3D4E5F60789AB000001 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/PostHog/posthog-ios.git";
@@ -377,6 +404,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		7CCC184D2F857C3000BDA324 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7CCC184C2F857C3000BDA324 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+		7CCC184F2F857C3000BDA324 /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7CCC184C2F857C3000BDA324 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
+		};
 		A1B2C3D4E5F60789AB000002 /* PostHog */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1B2C3D4E5F60789AB000001 /* XCRemoteSwiftPackageReference "posthog-ios" */;

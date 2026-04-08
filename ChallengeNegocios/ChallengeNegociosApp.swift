@@ -6,12 +6,14 @@
 
 import SwiftUI
 import PostHog
+import RevenueCat
 
 @main
 struct ChallengeNegociosApp: App {
     @State private var store = ViagemStore()
 
     init() {
+        // ── PostHog ────────────────────────────────────────────────────────
         let token = ProcessInfo.processInfo.environment["POSTHOG_PROJECT_TOKEN"] ?? ""
         let host  = ProcessInfo.processInfo.environment["POSTHOG_HOST"] ?? "https://app.posthog.com"
 
@@ -20,6 +22,9 @@ struct ChallengeNegociosApp: App {
             config.captureApplicationLifecycleEvents = true
             PostHogSDK.shared.setup(config)
         }
+
+        // ── RevenueCat ─────────────────────────────────────────────────────
+        SubscriptionManager.shared.configure()
     }
 
     var body: some Scene {

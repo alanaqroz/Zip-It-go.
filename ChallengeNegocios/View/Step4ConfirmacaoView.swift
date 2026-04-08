@@ -10,119 +10,236 @@ import PostHog
 
 struct Step4ConfirmacaoView: View {
     @Environment(OnboardingViewModel.self) private var vm
+    @Environment(\.dismiss) private var dismiss
+    @State private var mostraAlerta = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: AppLayout.espacamento) {
+        ZStack {
+            // MARK: Background
+            Image("AppFundaTelaPerguntas")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
 
-                StepIndicatorView(etapaAtual: 4, totalEtapas: 4)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Tudo certo?")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    Text("Revise os dados antes de gerar sua lista.")
+                    // MARK: Linha topo: botão voltar + indicador
+                    HStack(alignment: .center) {
+                        Button { dismiss() } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(width: 40, height: 40)
+                                .foregroundColor(.primary)
+                        }
+                        .glassEffect(in: Circle())
+
+                        Spacer()
+
+                        StepIndicatorView(etapaAtual: 4, totalEtapas: 4)
+                            .frame(maxWidth: 160)
+
+                        Spacer()
+
+                        Color.clear.frame(width: 40, height: 40)
+                    }
+                    .padding(.bottom, 24)
+
+                    // MARK: Título
+                    Text("Ready to go?")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(.primary)
+
+                    Text("Review your details before we build your list.")
                         .font(.subheadline)
-                        .foregroundColor(.appTextoSecundario)
-                }
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 8)
+                        .padding(.bottom, 24)
 
-                // Seção 1 — Destino
-                ResumoSecaoView(titulo: "Destino") {
-                    PostHogSDK.shared.capture("onboarding_section_edited", properties: ["section": "destination"])
-                    vm.editarEtapa(1)
-                } conteudo: {
-                    ResumoLinhaView(texto: vm.viagem.destino.isEmpty ? "—" : vm.viagem.destino)
-                    ResumoLinhaView(texto: vm.viagem.periodoFormatado)
-                    ResumoLinhaView(texto: "\(vm.viagem.quantidadeDias) dia\(vm.viagem.quantidadeDias > 1 ? "s" : "")")
-                }
+                    // MARK: Card de resumo unificado
+                    VStack(spacing: 0) {
+                        ResumoLinhaView(
+                            rotulo: "Destination",
+                            valor: vm.viagem.destino.isEmpty ? "—" : vm.viagem.destino + "."
+                        ) {
+                            PostHogSDK.shared.capture("onboarding_section_edited", properties: ["section": "destination"])
+                            vm.editarEtapa(1)
+                        }
 
-                // Seção 2 — Viajantes
-                ResumoSecaoView(titulo: "Viajantes") {
-                    PostHogSDK.shared.capture("onboarding_section_edited", properties: ["section": "travelers"])
-                    vm.editarEtapa(2)
-                } conteudo: {
-                    ResumoLinhaView(texto: vm.viagem.tipoGrupo.rawValue)
-                    if vm.viagem.tipoGrupo == .grupo {
-                        ResumoLinhaView(texto: vm.viagem.resumoViajantes)
+                        Divider().padding(.leading, AppLayout.espacamentoInterno)
+
+                        ResumoLinhaView(
+                            rotulo: "Dates",
+                            valor: vm.viagem.periodoFormatado
+                        ) {
+                            PostHogSDK.shared.capture("onboarding_section_edited", properties: ["section": "destination"])
+                            vm.editarEtapa(1)
+                        }
+
+                        Divider().padding(.leading, AppLayout.espacamentoInterno)
+
+                        ResumoLinhaView(
+                            rotulo: "Travelers",
+                            valor: vm.viagem.tipoGrupo == .grupo
+                                ? vm.viagem.resumoViajantes
+                                : vm.viagem.tipoGrupo.rawValue
+                        ) {
+                            PostHogSDK.shared.capture("onboarding_section_edited", properties: ["section": "travelers"])
+                            vm.editarEtapa(2)
+                        }
+
+                        Divider().padding(.leading, AppLayout.espacamentoInterno)
+
+                        ResumoLinhaView(
+                            rotulo: "Trip Type",
+                            valor: vm.viagem.tipoViagem.rawValue
+                        ) {
+                            PostHogSDK.shared.capture("onboarding_section_edited", properties: ["section": "trip_type"])
+                            vm.editarEtapa(3)
+                        }
+
+                        if !vm.viagem.atividades.isEmpty || !vm.viagem.outraAtividade.trimmingCharacters(in: .whitespaces).isEmpty {
+                            Divider().padding(.leading, AppLayout.espacamentoInterno)
+
+                            ResumoLinhaView(
+                                rotulo: "Activities",
+                                valor: vm.viagem.resumoAtividades + "."
+                            ) {
+                                PostHogSDK.shared.capture("onboarding_section_edited", properties: ["section": "trip_type"])
+                                vm.editarEtapa(3)
+                            }
+                        }
                     }
-                }
+                    .background(.regularMaterial)
+                    .cornerRadius(AppLayout.raioCantos)
+                    .padding(.bottom, 16)
 
-                // Seção 3 — Tipo e atividades
-                ResumoSecaoView(titulo: "Viagem") {
-                    PostHogSDK.shared.capture("onboarding_section_edited", properties: ["section": "trip_type"])
-                    vm.editarEtapa(3)
-                } conteudo: {
-                    ResumoLinhaView(texto: vm.viagem.tipoViagem.rawValue)
-                    if !vm.viagem.atividades.isEmpty || !vm.viagem.outraAtividade.trimmingCharacters(in: .whitespaces).isEmpty {
-                        ResumoLinhaView(texto: vm.viagem.resumoAtividades)
+                    // MARK: Banner aviso
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Color("Button"))
+
+                        Text("Please double-check your details. The list can't be edited once it's generated.")
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
                     }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color("Icon").opacity(0.25))
+                    .cornerRadius(AppLayout.raioCantos)
+                    .padding(.bottom, AppLayout.alturaBotao + 32)
                 }
+                .padding(.horizontal, AppLayout.espacamento)
+                .padding(.top, 80)
+            }
+            .scrollDismissesKeyboard(.immediately)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                BotaoContinuarView(ativo: true, rotulo: "✦  Generate My Packing List") {
+                    mostraAlerta = true
+                }
+            }
 
-                Spacer(minLength: 100)
+            // MARK: Alerta inline
+            if mostraAlerta {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture { mostraAlerta = false }
+
+                VStack(spacing: 0) {
+                    VStack(spacing: 12) {
+                        Text("Are you sure?")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundStyle(.primary)
+
+                        Text("Your list can't be changed after it's created.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.top, 28)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
+
+                    VStack(spacing: 12) {
+                        Button {
+                            mostraAlerta = false
+                            PostHogSDK.shared.capture("trip_list_generation_started", properties: [
+                                "destination": vm.viagem.destino,
+                                "days": vm.viagem.quantidadeDias,
+                                "trip_type": vm.viagem.tipoViagem.rawValue,
+                                "group_type": vm.viagem.tipoGrupo.rawValue
+                            ])
+                            vm.avancar(para: 5)
+                        } label: {
+                            Text("Generate List")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                                .background(Color("Button"))
+                                .foregroundStyle(Color("ButtonLabel"))
+                                .cornerRadius(AppLayout.raioBotao)
+                        }
+
+                        Button { mostraAlerta = false } label: {
+                            Text("Go Back")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                                .background(Color.primary.opacity(0.10))
+                                .foregroundStyle(.primary)
+                                .cornerRadius(AppLayout.raioBotao)
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
+                }
+                .background(.regularMaterial)
+                .cornerRadius(24)
+                .padding(.horizontal, 24)
+                .transition(.scale(scale: 0.92).combined(with: .opacity))
             }
-            .padding(.horizontal, AppLayout.espacamento)
-            .padding(.top, AppLayout.espacamento)
         }
-        .safeAreaInset(edge: .bottom) {
-            BotaoContinuarView(ativo: true, rotulo: "Gerar lista") {
-                PostHogSDK.shared.capture("trip_list_generation_started", properties: [
-                    "destination": vm.viagem.destino,
-                    "days": vm.viagem.quantidadeDias,
-                    "trip_type": vm.viagem.tipoViagem.rawValue,
-                    "group_type": vm.viagem.tipoGrupo.rawValue
-                ])
-                vm.avancar(para: 5)
-            }
-        }
-        .navigationBarTitleDisplayMode(.inline)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: mostraAlerta)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
-// MARK: - Seção com título + botão Editar + conteúdo
-
-private struct ResumoSecaoView<Conteudo: View>: View {
-    let titulo: String
-    let onEditar: () -> Void
-    @ViewBuilder let conteudo: () -> Conteudo
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-
-            HStack {
-                Text(titulo)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                Spacer()
-                Button("Editar", action: onEditar)
-                    .font(.subheadline)
-                    .foregroundColor(.appTextoSecundario)
-            }
-            .padding(.horizontal, AppLayout.espacamentoInterno)
-            .padding(.vertical, 12)
-
-            Divider()
-                .padding(.leading, AppLayout.espacamentoInterno)
-
-            conteudo()
-        }
-        .background(Color.appFundoSecundario)
-        .cornerRadius(AppLayout.raioCantos)
-    }
-}
-
-// MARK: - Linha de texto simples
+// MARK: - Linha de resumo
 
 private struct ResumoLinhaView: View {
-    let texto: String
+    let rotulo: String
+    let valor: String
+    let onEditar: () -> Void
 
     var body: some View {
-        HStack {
-            Text(texto)
-                .font(.subheadline)
-                .foregroundColor(.primary)
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(rotulo)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Text(valor)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.primary)
+            }
+
             Spacer()
+
+            Button(action: onEditar) {
+                HStack(spacing: 2) {
+                    Text("Edit")
+                        .font(.subheadline)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                }
+                .foregroundStyle(Color("Button"))
+            }
         }
         .padding(.horizontal, AppLayout.espacamentoInterno)
-        .padding(.vertical, 12)
+        .padding(.vertical, 14)
     }
 }
