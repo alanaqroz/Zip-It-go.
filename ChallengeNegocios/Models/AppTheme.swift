@@ -40,5 +40,5 @@ enum AppLayout {
     static let raioCantos: CGFloat         = 14   // arredondamento de cards e botões
     static let raioBotao: CGFloat          = 28   // pill shape para botão principal
     static let alturaBotao: CGFloat        = 56   // altura dos botões principais
-    static let alturaIndicador: CGFloat    = 5    // espessura dos dots de progresso
+    static let alturaIndicador: CGFloat    = 8    // espessura dos dots de progresso
 }

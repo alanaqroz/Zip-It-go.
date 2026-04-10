@@ -7,6 +7,7 @@
 
 import SwiftUI
 import PostHog
+internal import Combine
 
 struct Step5GerarListaView: View {
     @Environment(OnboardingViewModel.self) private var onboardingVM
@@ -15,56 +16,75 @@ struct Step5GerarListaView: View {
     var fecharOnboarding: () -> Void
 
     @State private var checklistVM = ChecklistViewModel()
-    @State private var viagemSalva = false
+    @State private var currentIndex = 0
+
+    let timer = Timer.publish(every: 0.25, on: .main, in: .common).autoconnect()
+    let indexLimite = 4
 
     var body: some View {
         ZStack {
-            Color(.systemGray6).ignoresSafeArea()
-
             if checklistVM.carregando && checklistVM.itens.isEmpty {
                 loadingView
             } else {
-                MainChecklistView(vm: checklistVM)
+                // Back button vai direto pra Home (fecharOnboarding), não volta pro edit
+                MainChecklistView(
+                    vm: checklistVM,
+                    onVoltar: fecharOnboarding
+                )
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(checklistVM.carregando)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                if !checklistVM.itens.isEmpty {
-                    Button(viagemSalva ? "Salvo ✓" : "Salvar") {
-                        salvarViagem()
-                    }
-                    .disabled(viagemSalva)
-                }
-            }
-        }
+        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
         .task {
             checklistVM.configurar(com: onboardingVM.viagem)
             await checklistVM.gerarLista()
+        }
+        // Auto-salva quando terminar de gerar
+        .onChange(of: checklistVM.carregando) { _, carregando in
+            if !carregando && !checklistVM.itens.isEmpty {
+                salvarViagem()
+            }
         }
     }
 
     // MARK: - Loading
 
     private var loadingView: some View {
-        VStack(spacing: 20) {
-            ProgressView()
-                .scaleEffect(1.3)
+        ZStack {
+            Image("AppFundaTelaPerguntas")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
 
-            VStack(spacing: 6) {
-                Text("Gerando sua lista...")
-                    .font(.headline)
-                Text("Consultando clima em \(onboardingVM.viagem.destino)")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
+            VStack(spacing: 24) {
+                Spacer()
+
+                Image("anima\(currentIndex % (indexLimite + 1))")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: 220, maxHeight: 220)
+                    .onReceive(timer) { _ in
+                        currentIndex += 1
+                    }
+
+                VStack(spacing: 8) {
+                    Text("Building your packing list")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(.primary)
+
+                    Text("Making sure you won't forget a thing...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                Spacer()
             }
+            .padding(.horizontal, AppLayout.espacamento)
         }
     }
 
-    // MARK: - Salvar
+    // MARK: - Auto-salvar (silencioso, sem navegar)
 
     private func salvarViagem() {
         var viagem = onboardingVM.viagem
@@ -79,11 +99,5 @@ struct Step5GerarListaView: View {
             "days": viagem.quantidadeDias,
             "items_count": viagem.itens.count
         ])
-        viagemSalva = true
-
-        // Volta para a Home após breve pausa
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            fecharOnboarding()
-        }
     }
 }

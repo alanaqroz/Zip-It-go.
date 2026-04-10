@@ -156,6 +156,7 @@ struct Step3TipoViagemView: View {
                 .padding(.top, 80)
                 .padding(.bottom, AppLayout.alturaBotao + 24)
             }
+            .ignoresSafeArea(.keyboard)
             .scrollDismissesKeyboard(.immediately)
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 BotaoContinuarView(ativo: temSelecao) {
@@ -171,6 +172,12 @@ struct Step3TipoViagemView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .onTapGesture {
+            UIApplication.shared.sendAction(
+                #selector(UIResponder.resignFirstResponder),
+                to: nil, from: nil, for: nil
+            )
+        }
     }
 }
 

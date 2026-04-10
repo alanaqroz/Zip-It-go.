@@ -76,6 +76,10 @@ class ChecklistViewModel {
         itens.append(ItemMala(nome: "\(categoria)#\(nome)"))
     }
 
+    func removerItem(id: UUID) {
+        itens.removeAll { $0.id == id }
+    }
+
     // MARK: - Generate
 
     func gerarLista() async {

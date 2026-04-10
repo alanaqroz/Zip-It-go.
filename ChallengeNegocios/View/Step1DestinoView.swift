@@ -26,6 +26,7 @@ struct Step1DestinoView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
 
+
                     // Indicador de etapas
                     StepIndicatorView(etapaAtual: 1, totalEtapas: 4)
                         .padding(.bottom, 24)
@@ -154,6 +155,8 @@ struct Step1DestinoView: View {
                 .padding(.top, 80)
                 .padding(.bottom, AppLayout.alturaBotao + 60)
             }
+            .ignoresSafeArea(.keyboard)
+            .scrollDismissesKeyboard(.immediately)
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 // MARK: Botão fixo no rodapé
                 BotaoContinuarView(ativo: !vm.viagem.destino.isEmpty) {
@@ -167,6 +170,12 @@ struct Step1DestinoView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .onTapGesture {
+            UIApplication.shared.sendAction(
+                #selector(UIResponder.resignFirstResponder),
+                to: nil, from: nil, for: nil
+            )
+        }
     }
 }
 

@@ -11,7 +11,7 @@
           "value" : "light"
         }
       ],
-      "filename" : "anima4Light.png",
+      "filename" : "anima4Light.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -22,7 +22,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "anima4Dark.png",
+      "filename" : "anima4Dark.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },

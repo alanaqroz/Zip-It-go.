@@ -38,19 +38,29 @@ struct ChallengeNegociosApp: App {
 // MARK: - Raiz do app
 
 struct AppRootView: View {
+    /// Controla se as telas de intro (marketing) já foram exibidas
+    @AppStorage("introShown")  private var introShown  = false
+    /// Controla se as perguntas (Step1…Step5) já foram concluídas
     @AppStorage("primeiraVez") private var primeiraVez = true
+
     @State private var onboardingVM     = OnboardingViewModel()
     @State private var mostraOnboarding = false
 
     var body: some View {
-        if primeiraVez {
-            // Primeira abertura: onboarding como tela raiz
+        if !introShown {
+            // ── 1ª abertura: telas de intro (marketing) ───────────────────
+            AppIntroView {
+                introShown = true
+                // primeiraVez ainda é true → irá para as perguntas
+            }
+        } else if primeiraVez {
+            // ── Intro vista mas perguntas ainda não concluídas ─────────────
             OnboardingContainerView {
                 primeiraVez = false
             }
             .environment(onboardingVM)
         } else {
-            // Aberturas seguintes: começa pela Home
+            // ── Aberturas normais: começa pela Home ───────────────────────
             Step6HomeView(mostraOnboarding: $mostraOnboarding)
                 .fullScreenCover(isPresented: $mostraOnboarding) {
                     OnboardingContainerView {

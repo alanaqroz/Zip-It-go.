@@ -40,83 +40,96 @@ struct Step6HomeView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if store.viagens.isEmpty {
-                    estadoVazio
-                } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 28) {
+            ZStack(alignment: .bottomTrailing) {
+                // ── Lista principal ────────────────────────────────────────────
+                List {
+                    // Header com imagem Topo
+                    Section {
+                        topoHeader
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
 
-                            // Saudação
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack(spacing: 8) {
-                                    Text("Hi")
-                                        .font(.largeTitle)
-                                        .fontWeight(.bold)
-                                    if manager.isPro { ProBadge() }
-                                    Spacer()
-                                    Button {
-                                        showSubscription = true
-                                    } label: {
-                                        Image(systemName: manager.isPro ? "person.crop.circle.fill.badge.checkmark" : "person.crop.circle")
-                                            .font(.title2)
-                                            .foregroundStyle(manager.isPro ? .purple : .secondary)
-                                    }
-                                }
-
-                                if proximaViagem != nil {
-                                    Text("Sua próxima viagem é em **\(diasAteProxima) dias**. Pronta para montar a mala?")
-                                        .font(.body)
-                                        .foregroundColor(.secondary)
-                                } else {
-                                    Text("Nenhuma viagem próxima.\nQue tal criar uma nova?")
-                                        .font(.body)
-                                        .foregroundColor(.secondary)
-                                }
-
-                                if !manager.isPro {
-                                    UpgradeButton(showPaywall: $showPaywall)
-                                        .padding(.top, 4)
-                                }
-                            }
-
-                            // Próxima viagem
-                            if let proxima = proximaViagem {
-                                SecaoHomeView(titulo: "Next Trip") {
+                    if store.viagens.isEmpty {
+                        Section {
+                            estadoVazio
+                        }
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                    } else {
+                        // Upcoming Trip
+                        if let proxima = proximaViagem {
+                            Section(header: secaoHeader("Upcoming Trip")) {
+                                ZStack {
                                     NavigationLink {
                                         ViagemDetalheView(viagem: proxima)
-                                    } label: {
-                                        CardViagemView(viagem: proxima)
-                                    }
-                                    .buttonStyle(.plain)
+                                    } label: { EmptyView() }
+                                        .opacity(0)
+                                    CardViagemView(viagem: proxima)
                                 }
-                            }
-
-                            // Todas as viagens
-                            SecaoHomeView(titulo: "All Trips") {
-                                ForEach(viagensFiltradas) { viagem in
-                                    NavigationLink {
-                                        ViagemDetalheView(viagem: viagem)
+                                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        store.remover(id: proxima.id)
                                     } label: {
-                                        CardViagemView(viagem: viagem)
+                                        Label("Excluir", systemImage: "trash")
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
                         }
-                        .padding(.horizontal, AppLayout.espacamento)
-                        .padding(.top, AppLayout.espacamento)
-                        .padding(.bottom, 100)
+
+                        // All Trips
+                        Section(header: secaoHeader("All Trips")) {
+                            ForEach(viagensFiltradas) { viagem in
+                                ZStack {
+                                    NavigationLink {
+                                        ViagemDetalheView(viagem: viagem)
+                                    } label: { EmptyView() }
+                                        .opacity(0)
+                                    CardViagemView(viagem: viagem)
+                                }
+                                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        store.remover(id: viagem.id)
+                                    } label: {
+                                        Label("Excluir", systemImage: "trash")
+                                    }
+                                }
+                            }
+                        }
                     }
+
+                    // Espaço para o botão flutuante
+                    Section { Color.clear.frame(height: 80) }
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .ignoresSafeArea(edges: .top)
+
+                // ── Botão "+" flutuante ────────────────────────────────────────
+                Button {
+                    mostraOnboarding = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .frame(width: 56, height: 56)
+                }
+                .glassEffect(in: Circle())
+                .padding(.trailing, 20)
+                .padding(.bottom, 32)
             }
         }
-        .safeAreaInset(edge: .bottom) {
-            barraInferior
-        }
-        // ── Paywall sheet ──────────────────────────────────────────────────
         .paywallSheet(isPresented: $showPaywall)
-        // ── Subscription management ────────────────────────────────────────
         .sheet(isPresented: $showSubscription) {
             NavigationStack {
                 SubscriptionStatusView()
@@ -129,45 +142,89 @@ struct Step6HomeView: View {
         }
     }
 
-    // MARK: - Barra inferior
+    // MARK: - Topo Header
 
-    private var barraInferior: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
-                TextField("Search", text: $busca)
-                if !busca.isEmpty {
-                    Button { busca = "" } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
-                    }
+    private var topoHeader: some View {
+        ZStack(alignment: .bottomLeading) {
+            Image("Topo")
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity)
+                .clipped()
+
+            VStack(alignment: .leading, spacing: 12) {
+                Spacer()
+
+                // Título
+                Text("Welcome!")
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundStyle(.primary)
+
+                // Subtítulo
+                if proximaViagem != nil {
+                    Text("Your next trip is in ")
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                    + Text("\(diasAteProxima) days")
+                        .font(.body)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color("Button"))
+                    + Text(". Ready to check your packing list?")
+                        .font(.body)
+                        .foregroundStyle(.primary)
                 } else {
-                    Image(systemName: "mic.fill")
-                        .foregroundColor(.secondary)
+                    Text("No upcoming trips yet. Ready to plan one?")
+                        .font(.body)
+                        .foregroundStyle(.primary)
                 }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(Color(.systemGray5))
-            .cornerRadius(24)
 
-            Button {
-                mostraOnboarding = true
-            } label: {
-                Image(systemName: "plus")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-                    .frame(width: 48, height: 48)
-                    .background(Color(.systemGray5))
-                    .cornerRadius(24)
+                // Barra de busca
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.secondary)
+                    TextField("Search", text: $busca)
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    if busca.isEmpty {
+                        Image(systemName: "mic.fill")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Button { busca = "" } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+                .padding(.top, 4)
+                .padding(.bottom, 24)
             }
+            .padding(.horizontal, 20)
         }
-        .padding(.horizontal, AppLayout.espacamento)
-        .padding(.top, 12)
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Header de seção
+
+    private func secaoHeader(_ titulo: String) -> some View {
+        HStack(spacing: 12) {
+            Text(titulo)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+            Rectangle()
+                .fill(Color(.separator))
+                .frame(height: 1)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
         .padding(.bottom, 8)
-        .background(.ultraThinMaterial)
+        .textCase(nil)
+        .listRowInsets(EdgeInsets())
+        .background(Color(.systemBackground))
     }
 
     // MARK: - Estado vazio
@@ -176,37 +233,17 @@ struct Step6HomeView: View {
         VStack(spacing: 16) {
             Image(systemName: "suitcase")
                 .font(.system(size: 52))
-                .foregroundColor(Color(.systemGray3))
-            Text("Nenhuma viagem ainda")
+                .foregroundStyle(Color(.systemGray3))
+            Text("No trips yet")
                 .font(.title3)
                 .fontWeight(.semibold)
-            Text("Toque em \"+\" para começar\na montar sua mala.")
+            Text("Tap \"+\" to start\npacking your bag.")
                 .font(.subheadline)
-                .foregroundColor(.appTextoSecundario)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-// MARK: - Seção com título + linha
-
-private struct SecaoHomeView<Conteudo: View>: View {
-    let titulo: String
-    @ViewBuilder let conteudo: () -> Conteudo
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 12) {
-                Text(titulo)
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                Rectangle()
-                    .fill(Color(.systemGray4))
-                    .frame(height: 1)
-            }
-            conteudo()
-        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 60)
     }
 }
 
@@ -214,12 +251,6 @@ private struct SecaoHomeView<Conteudo: View>: View {
 
 private struct CardViagemView: View {
     let viagem: Viagem
-
-    private var diasAtePartida: Int {
-        let hoje = Calendar.current.startOfDay(for: Date())
-        let partida = Calendar.current.startOfDay(for: viagem.dataIda)
-        return max(0, Calendar.current.dateComponents([.day], from: hoje, to: partida).day ?? 0)
-    }
 
     private var periodoResumido: String {
         let fmt = DateFormatter()
@@ -229,71 +260,71 @@ private struct CardViagemView: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
+        HStack(alignment: .center, spacing: 0) {
+            VStack(alignment: .leading, spacing: 8) {
 
                 // Nome + badge tipo
                 HStack(spacing: 8) {
                     Text(viagem.destino)
-                        .font(.title3)
+                        .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     Text(viagem.tipoViagem.rawValue)
                         .font(.caption)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(Color(.systemGray5))
-                        .foregroundColor(.primary)
-                        .cornerRadius(12)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color("ButtonLabel"))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 5)
+                        .background(Color("Button"))
+                        .clipShape(Capsule())
                 }
 
-                // Dias até a partida
-                Text("in \(diasAtePartida) days")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-
                 // Período + temperatura
-                HStack(spacing: 10) {
-                    HStack(spacing: 4) {
+                HStack(spacing: 12) {
+                    HStack(spacing: 5) {
                         Image(systemName: "calendar")
                             .font(.caption)
                         Text(periodoResumido)
-                            .font(.caption)
+                            .font(.subheadline)
                     }
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                     if let tMax = viagem.tempMax {
+                        Rectangle()
+                            .fill(Color(.separator))
+                            .frame(width: 1, height: 14)
+
                         HStack(spacing: 4) {
                             Image(systemName: "thermometer.medium")
                                 .font(.caption)
-                            Text("\(Int(tMax))°")
-                                .font(.caption)
+                            Text("\(Int(tMax))° C")
+                                .font(.subheadline)
                         }
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     }
                 }
 
                 // Total de itens
-                HStack(spacing: 4) {
-                    Image(systemName: "suitcase.fill")
+                HStack(spacing: 5) {
+                    Image(systemName: "bag.fill")
                         .font(.caption)
-                    Text("\(viagem.itens.count) itens")
-                        .font(.caption)
+                    Text("\(viagem.itens.count) items")
+                        .font(.subheadline)
                 }
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             }
 
             Spacer()
 
             Image(systemName: "chevron.right")
-                .font(.subheadline)
-                .foregroundColor(Color(.systemGray3))
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.primary)
         }
-        .padding(AppLayout.espacamentoInterno)
-        .background(Color(.systemGray6))
-        .cornerRadius(AppLayout.raioCantos)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 22)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 }
 
@@ -304,18 +335,15 @@ struct ViagemDetalheView: View {
     @State private var checklistVM = ChecklistViewModel()
 
     var body: some View {
-        ZStack {
-            Color(.systemGray6).ignoresSafeArea()
-            MainChecklistView(vm: checklistVM)
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            checklistVM.configurar(com: viagem)
-            checklistVM.itens         = viagem.itens
-            checklistVM.tempMin       = viagem.tempMin
-            checklistVM.tempMax       = viagem.tempMax
-            checklistVM.condicaoClima = viagem.condicaoClima
-            checklistVM.estacao       = viagem.estacao
-        }
+        MainChecklistView(vm: checklistVM)
+            .navigationBarHidden(true)
+            .onAppear {
+                checklistVM.configurar(com: viagem)
+                checklistVM.itens         = viagem.itens
+                checklistVM.tempMin       = viagem.tempMin
+                checklistVM.tempMax       = viagem.tempMax
+                checklistVM.condicaoClima = viagem.condicaoClima
+                checklistVM.estacao       = viagem.estacao
+            }
     }
 }
