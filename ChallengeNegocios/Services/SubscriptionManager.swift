@@ -39,7 +39,7 @@ final class SubscriptionManager {
         Purchases.logLevel = .debug
         #endif
 
-        Purchases.configure(withAPIKey: "test_pWddoaslGvNWiCfFiKVXJdHpNzc")
+        Purchases.configure(withAPIKey: "appl_GLVCQzfVMckRZiezKqsSTNkcozx")
 
         // Warm up local state
         Task { await refreshCustomerInfo() }

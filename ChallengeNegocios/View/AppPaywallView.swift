@@ -13,8 +13,6 @@ import RevenueCatUI
 
 // MARK: - AppPaywallView
 
-/// Full-screen paywall backed by the current Offering on the dashboard.
-/// Dismiss via the built-in close button or `dismiss` environment action.
 struct AppPaywallView: View {
 
     /// Optional: pass a specific offering; defaults to the current one.
