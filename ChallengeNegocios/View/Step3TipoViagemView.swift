@@ -256,7 +256,7 @@ private struct CategoriaAccordionView: View {
 
             if aberta {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Selecione as opções:")
+                    Text("Select options:")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, AppLayout.espacamentoInterno)

@@ -129,23 +129,23 @@ class ChecklistViewModel {
             let estacaoEstimada: String
             if hemisferioSul {
                 switch mes {
-                case 12,1,2: estacaoEstimada = "Verão"
-                case 3,4,5:  estacaoEstimada = "Outono"
-                case 6,7,8:  estacaoEstimada = "Inverno"
-                default:      estacaoEstimada = "Primavera"
+                case 12,1,2: estacaoEstimada = "Summer"
+                case 3,4,5:  estacaoEstimada = "Fall"
+                case 6,7,8:  estacaoEstimada = "Winter"
+                default:      estacaoEstimada = "Spring"
                 }
             } else {
                 switch mes {
-                case 12,1,2: estacaoEstimada = "Inverno"
-                case 3,4,5:  estacaoEstimada = "Primavera"
-                case 6,7,8:  estacaoEstimada = "Verão"
-                default:      estacaoEstimada = "Outono"
+                case 12,1,2: estacaoEstimada = "Winter"
+                case 3,4,5:  estacaoEstimada = "Spring"
+                case 6,7,8:  estacaoEstimada = "Summer"
+                default:      estacaoEstimada = "Fall"
                 }
             }
             await MainActor.run { estacao = estacaoEstimada }
             let fmt = DateFormatter()
             fmt.dateFormat = "MMMM"
-            climaResumo = "mês \(fmt.string(from: dataIda))"
+            climaResumo = "\(fmt.string(from: dataIda))"
         }
 
         let foraDoBrasil = isoCode.uppercased() != "BR" && !isoCode.isEmpty
@@ -153,114 +153,114 @@ class ChecklistViewModel {
 
         // Clothing
         var linhasBase: [String] = [
-            "Clothing#\(qtdCamisetas) Camisetas",
-            "Clothing#\(qtdIntimas) Roupas íntimas",
-            "Clothing#\(qtdMeias) Meias",
-            "Clothing#\(qtdCalcas) Calças",
-            "Clothing#\(qtdPijamas) Pijamas"
+            "Clothing#\(qtdCamisetas) T-shirts",
+            "Clothing#\(qtdIntimas) Underwear",
+            "Clothing#\(qtdMeias) Socks",
+            "Clothing#\(qtdCalcas) Pants",
+            "Clothing#\(qtdPijamas) Pajamas"
         ]
 
-        // Extras de clima
+        // Weather extras
         switch classificacao {
         case "FRIO":
             linhasBase += [
-                "Clothing#1 Casaco pesado",
-                "Clothing#1 Luvas",
-                "Clothing#1 Cachecol",
-                "Clothing#1 Gorro",
-                "Footwear#1 Bota impermeável"
+                "Clothing#1 Heavy coat",
+                "Clothing#1 Gloves",
+                "Clothing#1 Scarf",
+                "Clothing#1 Beanie",
+                "Footwear#1 Waterproof boots"
             ]
         case "QUENTE":
             linhasBase += [
-                "Clothing#1 Boné",
-                "Clothing#2 Roupas de banho",
-                "Toiletries#Protetor solar FPS 50+"
+                "Clothing#1 Cap",
+                "Clothing#2 Swimwear",
+                "Toiletries#Sunscreen SPF 50+"
             ]
         default:
-            linhasBase.append("Clothing#1 Casaco leve")
+            linhasBase.append("Clothing#1 Light jacket")
         }
 
         // Footwear
-        linhasBase.append("Footwear#1 Tênis confortável")
+        linhasBase.append("Footwear#1 Comfortable sneakers")
 
         // Documents
         if foraDoBrasil {
             linhasBase += [
-                "Documents#Passaporte",
-                "Documents#Seguro viagem",
-                "Documents#Comprovante de hospedagem",
-                "Documents#Passagens",
-                "Documents#Cartões",
-                "Documents#Dinheiro",
-                "Documents#Visto (se necessário)"
+                "Documents#Passport",
+                "Documents#Travel insurance",
+                "Documents#Hotel confirmation",
+                "Documents#Flight tickets",
+                "Documents#Credit/debit cards",
+                "Documents#Cash",
+                "Documents#Visa (if required)"
             ]
         } else {
             linhasBase += [
-                "Documents#RG ou CNH",
-                "Documents#Passagens",
-                "Documents#Reservas",
-                "Documents#Cartões",
-                "Documents#Dinheiro"
+                "Documents#ID / Driver's license",
+                "Documents#Flight tickets",
+                "Documents#Reservations",
+                "Documents#Credit/debit cards",
+                "Documents#Cash"
             ]
         }
 
         // Toiletries
         linhasBase += [
-            "Toiletries#Escova de dentes",
-            "Toiletries#Pasta de dentes",
+            "Toiletries#Toothbrush",
+            "Toiletries#Toothpaste",
             "Toiletries#Shampoo",
-            "Toiletries#Condicionador",
-            "Toiletries#Sabonete",
-            "Toiletries#Desodorante",
+            "Toiletries#Conditioner",
+            "Toiletries#Body wash",
+            "Toiletries#Deodorant",
             "Toiletries#Perfume",
-            "Toiletries#Escova de cabelo",
-            "Toiletries#Lâmina de barbear",
-            "Toiletries#Lenços umedecidos"
+            "Toiletries#Hairbrush",
+            "Toiletries#Razor",
+            "Toiletries#Wet wipes"
         ]
 
         // Health & Meds
         linhasBase += [
-            "Health & Meds#Analgésicos",
-            "Health & Meds#Antialérgico",
-            "Health & Meds#Remédio para gripe",
-            "Health & Meds#Curativo",
-            "Health & Meds#Álcool em gel",
-            "Health & Meds#Repelente"
+            "Health & Meds#Painkillers",
+            "Health & Meds#Antihistamine",
+            "Health & Meds#Cold medicine",
+            "Health & Meds#Band-aids",
+            "Health & Meds#Hand sanitizer",
+            "Health & Meds#Insect repellent"
         ]
 
         // Electronics
         linhasBase += [
-            "Electronics#Celular",
-            "Electronics#Carregador de celular",
-            "Electronics#Fone de ouvido",
+            "Electronics#Phone",
+            "Electronics#Phone charger",
+            "Electronics#Earphones",
             "Electronics#Power bank",
-            "Electronics#Adaptador de tomada"
+            "Electronics#Travel adapter"
         ]
 
-        // Kids — itens para crianças (2–12 anos)
+        // Kids (ages 2–12)
         if numCriancas > 0 {
             linhasBase += [
-                "Kids#\(numCriancas) Pijamas infantis",
-                "Kids#Roupas extras para as crianças",
-                "Kids#Protetor solar infantil",
-                "Kids#Remédios infantis (febre, dor)",
-                "Kids#Mochila infantil",
-                "Kids#Entretenimento (tablet, livros)"
+                "Kids#\(numCriancas) Kids' pajamas",
+                "Kids#Extra clothes for the kids",
+                "Kids#Kids' sunscreen",
+                "Kids#Children's medicine (fever, pain)",
+                "Kids#Kids' backpack",
+                "Kids#Entertainment (tablet, books)"
             ]
         }
 
-        // Baby — itens para bebês (0–2 anos)
+        // Baby (ages 0–2)
         if numBebes > 0 {
-            let fraldas = numBebes * dias * 6   // ~6 fraldas/dia por bebê????????
+            let diapers = numBebes * dias * 6
             linhasBase += [
-                "Baby#\(fraldas) Fraldas",
-                "Baby#Pomada para assaduras",
-                "Baby#Lenços umedecidos bebê",
-                "Baby#Mamadeira",
-                "Baby#Leite em pó",
-                "Baby#Termômetro",
-                "Baby#Roupas extras de bebê",
-                "Baby#Chupeta"
+                "Baby#\(diapers) Diapers",
+                "Baby#Diaper rash cream",
+                "Baby#Baby wet wipes",
+                "Baby#Baby bottle",
+                "Baby#Baby formula",
+                "Baby#Thermometer",
+                "Baby#Extra baby clothes",
+                "Baby#Pacifier"
             ]
         }
 
@@ -275,27 +275,27 @@ class ChecklistViewModel {
         }
 
         let instrucaoIA = """
-        Você é um assistente de viagem. Gere APENAS itens extras específicos para a viagem abaixo que NÃO sejam roupas comuns, documentos, higiene básica, eletrônicos básicos ou remédios básicos — esses já estão na lista.
+        You are a travel assistant. Generate ONLY specific extra items for the trip below that are NOT common clothing, documents, basic toiletries, basic electronics, or basic medicine — those are already on the list.
 
-        VIAGEM: \(destinoSelecionado) — \(dias) dias — \(climaResumo)
-        TIPO: \(tipoViagem.isEmpty ? "Lazer" : tipoViagem)
-        ATIVIDADES: \(atividades.isEmpty ? "Nenhuma especificada" : atividades)
+        TRIP: \(destinoSelecionado) — \(dias) days — \(climaResumo)
+        TYPE: \(tipoViagem.isEmpty ? "Leisure" : tipoViagem)
+        ACTIVITIES: \(atividades.isEmpty ? "None specified" : atividades)
 
-        Exemplos do que gerar: equipamentos de esporte específicos, adaptadores especiais, itens culturais do destino.
-        Máximo 6 itens extras. Se não houver nada relevante, responda apenas: NENHUM
+        Examples: specific sports gear, special adapters, destination-specific cultural items.
+        Maximum 6 extra items. If nothing relevant, reply only: NONE
 
-        FORMATO OBRIGATÓRIO — UM ITEM POR LINHA:
-        Categoria#NomeDoItem
-        CATEGORIAS PERMITIDAS: Clothing, Footwear, Toiletries, Health & Meds, Electronics
-        PROIBIDO: markdown, emojis, vírgulas entre itens, texto explicativo
+        MANDATORY FORMAT — ONE ITEM PER LINE:
+        Category#ItemName
+        ALLOWED CATEGORIES: Clothing, Footwear, Toiletries, Health & Meds, Electronics
+        FORBIDDEN: markdown, emojis, commas between items, explanatory text
         """
 
         var itensExtras: [ItemMala] = []
         do {
             let session = LanguageModelSession(instructions: instrucaoIA)
-            let response = try await session.respond(to: "Extras para \(destinoSelecionado).")
+            let response = try await session.respond(to: "Extra items for \(destinoSelecionado).")
 
-            if !response.content.uppercased().contains("NENHUM") {
+            if !response.content.uppercased().contains("NONE") {
                 itensExtras = response.content
                     .components(separatedBy: .newlines)
                     .flatMap { $0.components(separatedBy: ",") }

@@ -75,7 +75,7 @@ struct Step6HomeView: View {
                                     Button(role: .destructive) {
                                         store.remover(id: proxima.id)
                                     } label: {
-                                        Label("Excluir", systemImage: "trash")
+                                        Label("Delete", systemImage: "trash")
                                     }
                                 }
                             }
@@ -98,7 +98,7 @@ struct Step6HomeView: View {
                                     Button(role: .destructive) {
                                         store.remover(id: viagem.id)
                                     } label: {
-                                        Label("Excluir", systemImage: "trash")
+                                        Label("Delete", systemImage: "trash")
                                     }
                                 }
                             }
@@ -114,9 +114,14 @@ struct Step6HomeView: View {
                 .scrollContentBackground(.hidden)
                 .ignoresSafeArea(edges: .top)
 
-                // ── Botão "+" flutuante ────────────────────────────────────────
+                //  Botão "+" flutuante
                 Button {
-                    mostraOnboarding = true
+                    // 1 lista grátis — a partir da 2ª exige Pro
+                    if store.viagens.isEmpty || manager.isPro {
+                        mostraOnboarding = true
+                    } else {
+                        showPaywall = true
+                    }
                 } label: {
                     Image(systemName: "plus")
                         .font(.title2)
@@ -129,7 +134,9 @@ struct Step6HomeView: View {
                 .padding(.bottom, 32)
             }
         }
-        .paywallSheet(isPresented: $showPaywall)
+        .sheet(isPresented: $showPaywall) {
+            CustomPaywallView()
+        }
         .sheet(isPresented: $showSubscription) {
             NavigationStack {
                 SubscriptionStatusView()

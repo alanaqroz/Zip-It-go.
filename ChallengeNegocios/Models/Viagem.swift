@@ -11,12 +11,12 @@ import Foundation
 
 enum TipoGrupo: String, Codable, CaseIterable {
     case solo  = "Solo"
-    case grupo = "Grupo"
+    case grupo = "Group"
 }
 
 enum TipoViagem: String, Codable, CaseIterable {
-    case lazer    = "Lazer"
-    case negocios = "Negócios"
+    case lazer    = "Leisure"
+    case negocios = "Business"
 }
 
 // MARK: - Viagem
@@ -61,9 +61,9 @@ struct Viagem: Identifiable, Codable {
     var resumoViajantes: String {
         if tipoGrupo == .solo { return "Solo" }
         var partes: [String] = []
-        if numAdultos  > 0 { partes.append("\(numAdultos) adulto\(numAdultos > 1 ? "s" : "")") }
-        if numCriancas > 0 { partes.append("\(numCriancas) criança\(numCriancas > 1 ? "s" : "")") }
-        if numBebes    > 0 { partes.append("\(numBebes) bebê\(numBebes > 1 ? "s" : "")") }
+        if numAdultos  > 0 { partes.append("\(numAdultos) adult\(numAdultos > 1 ? "s" : "")") }
+        if numCriancas > 0 { partes.append("\(numCriancas) kid\(numCriancas > 1 ? "s" : "")") }
+        if numBebes    > 0 { partes.append("\(numBebes) baby\(numBebes > 1 ? "/babies" : "")") }
         return partes.joined(separator: " · ")
     }
 
