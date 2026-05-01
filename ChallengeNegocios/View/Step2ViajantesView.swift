@@ -42,7 +42,6 @@ struct Step2ViajantesView: View {
 
                         Spacer()
 
-                        // Espaço espelho para balancear o botão voltar
                         Color.clear.frame(width: 40, height: 40)
                     }
                     .padding(.bottom, 24)
@@ -53,7 +52,7 @@ struct Step2ViajantesView: View {
                         .foregroundStyle(.primary)
 
                     Text("Choose your profile so we can personalize your experience.")
-                        .font(.subheadline)
+                        .font(.body)
                         .foregroundStyle(.secondary)
                         .padding(.top, 8)
                         .padding(.bottom, 24)
@@ -123,6 +122,7 @@ struct Step2ViajantesView: View {
                     ])
                     vm.avancar(para: 3)
                 }
+                .padding(.bottom, 40)
             }
         }
         .navigationBarBackButtonHidden(true)
@@ -141,12 +141,10 @@ private struct TipoGrupoCardView: View {
     var body: some View {
         Button(action: acao) {
             ZStack {
-                // Fundo — troca de asset ao selecionar, responsivo via GeometryReader
                 Image(selecionado ? "CardFundoSelect" : "CardFundoNormal")
                     .resizable()
                     .aspectRatio(1, contentMode: .fill)
 
-                // Conteúdo vetorial sobreposto
                 VStack(spacing: 10) {
                     Image(systemName: icone)
                         .font(.system(size: 28, weight: .medium))
@@ -156,9 +154,7 @@ private struct TipoGrupoCardView: View {
                 .foregroundStyle(.primary)
             }
             .clipShape(RoundedRectangle(cornerRadius: 20))
-            // aspectRatio garante card quadrado em qualquer tela
             .aspectRatio(1, contentMode: .fit)
-            // frame(maxWidth: .infinity) junto com o HStack divide o espaço igualmente
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.plain)
@@ -166,7 +162,6 @@ private struct TipoGrupoCardView: View {
 }
 
 // MARK: - Contador de pessoas
-
 private struct ContadorView: View {
     let titulo: String
     let descricao: String
@@ -177,7 +172,7 @@ private struct ContadorView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(titulo)
-                    .font(.subheadline)
+                    .font(.body)
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
                 Text(descricao)
@@ -185,29 +180,36 @@ private struct ContadorView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            HStack(spacing: 16) {
+            // Pill idêntico ao contador da lista gerada
+            HStack(spacing: 0) {
                 Button {
                     if valor > minimo { valor -= 1 }
                 } label: {
-                    Image(systemName: "minus")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(valor > minimo ? .primary : Color.primary.opacity(0.3))
+                    Text("−")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(valor > minimo ? .primary : Color.primary.opacity(0.3))
+                        .frame(width: 36, height: 36)
                 }
                 .disabled(valor <= minimo)
+                .buttonStyle(.plain)
 
                 Text("\(valor)")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .frame(minWidth: 20, alignment: .center)
+                    .font(.body.weight(.semibold))
+                    .foregroundColor(.primary)
+                    .frame(minWidth: 28, alignment: .center)
 
                 Button {
                     valor += 1
                 } label: {
-                    Image(systemName: "plus")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
+                    Text("+")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.primary)
+                        .frame(width: 36, height: 36)
                 }
+                .buttonStyle(.plain)
             }
+            .background(Color.primary.opacity(0.10))
+            .cornerRadius(24)
         }
         .padding(.horizontal, AppLayout.espacamento)
         .padding(.vertical, 14)

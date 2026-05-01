@@ -41,9 +41,7 @@ struct Step6HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
-                // ── Lista principal ────────────────────────────────────────────
                 List {
-                    // Header com imagem Topo
                     Section {
                         topoHeader
                     }
@@ -126,7 +124,7 @@ struct Step6HomeView: View {
                     Image(systemName: "plus")
                         .font(.title2)
                         .fontWeight(.semibold)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.secondary)
                         .frame(width: 56, height: 56)
                 }
                 .glassEffect(in: Circle())
@@ -185,17 +183,14 @@ struct Step6HomeView: View {
                         .foregroundStyle(.primary)
                 }
 
-                // Barra de busca
+                // Barra de busca — Liquid Glass
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.secondary)
                     TextField("Search", text: $busca)
                         .foregroundStyle(.primary)
                     Spacer()
-                    if busca.isEmpty {
-                        Image(systemName: "mic.fill")
-                            .foregroundStyle(.secondary)
-                    } else {
+                    if !busca.isEmpty {
                         Button { busca = "" } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundStyle(.secondary)
@@ -204,8 +199,7 @@ struct Step6HomeView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
+                .glassEffect(in: Capsule())
                 .padding(.top, 4)
                 .padding(.bottom, 24)
             }
@@ -219,7 +213,7 @@ struct Step6HomeView: View {
     private func secaoHeader(_ titulo: String) -> some View {
         HStack(spacing: 12) {
             Text(titulo)
-                .font(.subheadline)
+                .font(.body)
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
             Rectangle()
@@ -245,7 +239,7 @@ struct Step6HomeView: View {
                 .font(.title3)
                 .fontWeight(.semibold)
             Text("Tap \"+\" to start\npacking your bag.")
-                .font(.subheadline)
+                .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -262,38 +256,64 @@ private struct CardViagemView: View {
     private var periodoResumido: String {
         let fmt = DateFormatter()
         fmt.dateFormat = "d MMM"
-        fmt.locale = Locale(identifier: "pt_BR")
-        return "\(fmt.string(from: viagem.dataIda)) - \(fmt.string(from: viagem.dataVolta))"
+        fmt.locale = Locale(identifier: "en_US")
+        return "\(fmt.string(from: viagem.dataIda)) – \(fmt.string(from: viagem.dataVolta))"
+    }
+
+    // Cores do tag por tipo de viagem
+    private var tagBackground: Color {
+        viagem.tipoViagem == .negocios
+            ? Color(.systemIndigo)
+            : Color("Button")
+    }
+    private var tagForeground: Color {
+        viagem.tipoViagem == .negocios
+            ? .white
+            : Color("ButtonLabel")
+    }
+
+    // Ícone de clima baseado na condição textual
+    private var weatherIcon: String {
+        let c = viagem.condicaoClima.lowercased()
+        if c.contains("thunder") || c.contains("storm")                                     { return "cloud.bolt.rain.fill" }
+        if c.contains("snow") || c.contains("blizzard") || c.contains("sleet") || c.contains("flurr") { return "cloud.snow.fill" }
+        if c.contains("rain") || c.contains("drizzle") || c.contains("shower")             { return "cloud.drizzle.fill" }
+        if c.contains("cloud") || c.contains("fog") || c.contains("haz") || c.contains("overcast") { return "smoke.fill" }
+        if c.contains("clear") || c.contains("sun") || c.contains("hot")                   { return "sun.max.fill" }
+        // fallback por temperatura
+        guard let tMax = viagem.tempMax else { return "thermometer.medium" }
+        if tMax >= 25 { return "sun.max.fill" }
+        if tMax < 5  { return "cloud.snow.fill" }
+        return "cloud.sun.fill"
     }
 
     var body: some View {
         HStack(alignment: .center, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
 
-                // Nome + badge tipo
-                HStack(spacing: 8) {
-                    Text(viagem.destino)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.primary)
+                // Tag no topo
+                Text(viagem.tipoViagem.rawValue)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(tagForeground)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(tagBackground)
+                    .clipShape(Capsule())
 
-                    Text(viagem.tipoViagem.rawValue)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color("ButtonLabel"))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 5)
-                        .background(Color("Button"))
-                        .clipShape(Capsule())
-                }
+                // Nome do destino
+                Text(viagem.destino)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.primary)
 
-                // Período + temperatura
+                // Período + temperatura com ícone dinâmico
                 HStack(spacing: 12) {
                     HStack(spacing: 5) {
                         Image(systemName: "calendar")
                             .font(.caption)
                         Text(periodoResumido)
-                            .font(.subheadline)
+                            .font(.body)
                     }
                     .foregroundStyle(.secondary)
 
@@ -303,10 +323,10 @@ private struct CardViagemView: View {
                             .frame(width: 1, height: 14)
 
                         HStack(spacing: 4) {
-                            Image(systemName: "thermometer.medium")
+                            Image(systemName: weatherIcon)
                                 .font(.caption)
                             Text("\(Int(tMax))° C")
-                                .font(.subheadline)
+                                .font(.body)
                         }
                         .foregroundStyle(.secondary)
                     }
@@ -317,7 +337,7 @@ private struct CardViagemView: View {
                     Image(systemName: "bag.fill")
                         .font(.caption)
                     Text("\(viagem.itens.count) items")
-                        .font(.subheadline)
+                        .font(.body)
                 }
                 .foregroundStyle(.secondary)
             }

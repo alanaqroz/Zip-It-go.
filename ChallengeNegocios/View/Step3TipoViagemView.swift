@@ -5,11 +5,11 @@
 //  Created by Alana Queiroz on 26/03/26.
 //
 
+internal import Combine
 import SwiftUI
 import PostHog
 
 // MARK: - Dados das categorias
-
 private struct CategoriaAtividade {
     let nome: String
     let icone: String
@@ -18,23 +18,24 @@ private struct CategoriaAtividade {
 
 private let categorias: [CategoriaAtividade] = [
     CategoriaAtividade(nome: "Nature",  icone: "leaf.circle.fill",       itens: ["Beach", "Hiking", "Camping", "Waterfall", "Cycling", "Mountaineering"]),
-    CategoriaAtividade(nome: "Events",  icone: "film",                   itens: ["Shows", "Festivals", "Museums", "Theater", "Exhibitions", "Parks"]),
-    CategoriaAtividade(nome: "Sports",  icone: "figure.run.circle.fill", itens: ["Surf", "Diving", "Ski", "Soccer", "Tennis", "Swimming"])
+    CategoriaAtividade(nome: "Events",  icone: "ticket.fill",                  itens: ["Shows", "Festivals", "Museums", "Theater", "Exhibitions", "Parks"]),
+    CategoriaAtividade(nome: "Sports",  icone: "figure.run.circle.fill", itens: ["Surf", "Diving", "Ski", "Soccer", "Tennis", "Swimming, Sport"])
 ]
 
 // MARK: - Tela 3
-
 struct Step3TipoViagemView: View {
     @Environment(OnboardingViewModel.self) private var vm
     @Environment(\.dismiss) private var dismiss
+    
     @State private var abertas: Set<String> = []
     @State private var temSelecao = false
+    
+    @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
         @Bindable var vm = vm
 
-        ZStack {
-            // MARK: Background (Mantido o original como você pediu)
+        ZStack(alignment: .bottom) {
             Image("AppFundaTelaPerguntas")
                 .resizable()
                 .scaledToFill()
@@ -43,7 +44,6 @@ struct Step3TipoViagemView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
 
-                    // MARK: Linha topo: botão voltar + indicador
                     HStack(alignment: .center) {
                         Button { dismiss() } label: {
                             Image(systemName: "chevron.left")
@@ -70,8 +70,8 @@ struct Step3TipoViagemView: View {
                         .foregroundStyle(.primary)
 
                     Text("Choose the purpose of your trip.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(.body)
+                        .foregroundStyle(.primary)
                         .padding(.top, 8)
                         .padding(.bottom, 24)
 
@@ -97,14 +97,13 @@ struct Step3TipoViagemView: View {
                     }
                     .padding(.bottom, 32)
 
-                    // MARK: Título Atividades
                     Text("Activities")
                         .font(.system(size: 22, weight: .bold))
                         .foregroundStyle(.primary)
 
                     Text("Expand categories and choose what you'd like to do.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(.body)
+                        .foregroundStyle(.primary)
                         .padding(.top, 8)
                         .padding(.bottom, 16)
 
@@ -116,12 +115,16 @@ struct Step3TipoViagemView: View {
                                 aberta: abertas.contains(categoria.nome),
                                 selecionadas: vm.viagem.atividades
                             ) {
-                                if abertas.contains(categoria.nome) {
-                                    abertas.remove(categoria.nome)
-                                } else {
-                                    abertas.insert(categoria.nome)
+                                // Sua lógica original restaurada
+                                withAnimation {
+                                    if abertas.contains(categoria.nome) {
+                                        abertas.remove(categoria.nome)
+                                    } else {
+                                        abertas.insert(categoria.nome)
+                                    }
                                 }
                             } onToggleItem: { item in
+                                // Sua lógica original restaurada
                                 if vm.viagem.atividades.contains(item) {
                                     vm.viagem.atividades.removeAll { $0 == item }
                                 } else {
@@ -134,7 +137,7 @@ struct Step3TipoViagemView: View {
 
                     // MARK: Outra atividade
                     Text("Something else?")
-                        .font(.subheadline)
+                        .font(.body)
                         .fontWeight(.semibold)
                         .foregroundStyle(.primary)
                         .padding(.bottom, 8)
@@ -143,9 +146,10 @@ struct Step3TipoViagemView: View {
                         "",
                         text: $vm.viagem.outraAtividade,
                         prompt: Text("E.g. Photography, formal dinner...")
-                            .foregroundColor(.secondary),
+                            .foregroundColor(.primary),
                         axis: .vertical
                     )
+                    .focused($isTextFieldFocused)
                     .lineLimit(3...5)
                     .foregroundStyle(.primary)
                     .padding(AppLayout.espacamentoInterno)
@@ -156,33 +160,30 @@ struct Step3TipoViagemView: View {
                 .padding(.top, 80)
                 .padding(.bottom, AppLayout.alturaBotao + 24)
             }
-            .ignoresSafeArea(.keyboard)
-            .scrollDismissesKeyboard(.immediately)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                BotaoContinuarView(ativo: temSelecao) {
-                    PostHogSDK.shared.capture("onboarding_step3_completed", properties: [
-                        "trip_type": vm.viagem.tipoViagem.rawValue,
-                        "activities": vm.viagem.atividades,
-                        "activities_count": vm.viagem.atividades.count,
-                        "has_custom_activity": !vm.viagem.outraAtividade.isEmpty
-                    ])
-                    vm.avancar(para: 4)
-                }
+            .scrollDismissesKeyboard(.interactively)
+            .adaptsToKeyboard()
+
+            BotaoContinuarView(ativo: temSelecao) {
+                PostHogSDK.shared.capture("onboarding_step3_completed", properties: [
+                    "trip_type": vm.viagem.tipoViagem.rawValue,
+                    "activities": vm.viagem.atividades,
+                    "activities_count": vm.viagem.atividades.count,
+                    "has_custom_activity": !vm.viagem.outraAtividade.isEmpty
+                ])
+                vm.avancar(para: 4)
             }
+            .padding(.bottom, 40)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .onTapGesture {
-            UIApplication.shared.sendAction(
-                #selector(UIResponder.resignFirstResponder),
-                to: nil, from: nil, for: nil
-            )
+            isTextFieldFocused = false
         }
     }
+    
 }
 
 // MARK: - Card Leisure / Business
-
 private struct TipoViagemCardView: View {
     let icone: String
     let titulo: String
@@ -213,7 +214,6 @@ private struct TipoViagemCardView: View {
 }
 
 // MARK: - Accordion de categoria
-
 private struct CategoriaAccordionView: View {
     let categoria: CategoriaAtividade
     let aberta: Bool
@@ -223,7 +223,6 @@ private struct CategoriaAccordionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-
             Button(action: onToggle) {
                 HStack(spacing: 12) {
                     Image(systemName: categoria.icone)
@@ -232,14 +231,15 @@ private struct CategoriaAccordionView: View {
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(categoria.nome)
-                            .font(.subheadline)
+                            .font(.body)
                             .fontWeight(.semibold)
                             .foregroundStyle(.primary)
+                        
                         if !aberta {
                             let itensAtivos = categoria.itens.filter { selecionadas.contains($0) }
                             Text(itensAtivos.isEmpty ? "No activities selected yet" : itensAtivos.joined(separator: ", "))
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.primary)
                                 .lineLimit(1)
                         }
                     }
@@ -277,23 +277,26 @@ private struct CategoriaAccordionView: View {
 }
 
 // MARK: - Flow de chips
-
 private struct ChipsFlowView: View {
     let itens: [String]
     let selecionados: [String]
     let onToggle: (String) -> Void
+    
+    let colunas = [GridItem(.adaptive(minimum: 100), spacing: 8)]
 
     var body: some View {
-        FlowLayout(spacing: 8) {
+        LazyVGrid(columns: colunas, alignment: .leading, spacing: 8) {
             ForEach(itens, id: \.self) { item in
                 let ativo = selecionados.contains(item)
+                
                 Button {
                     onToggle(item)
                 } label: {
                     Text(item)
-                        .font(.subheadline)
+                        .font(.body)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity)
                         .background(ativo ? Color("RoxoClaro") : Color.primary.opacity(0.10))
                         .foregroundStyle(ativo ? Color.black : Color.primary)
                         .cornerRadius(20)
@@ -304,39 +307,38 @@ private struct ChipsFlowView: View {
     }
 }
 
-// MARK: - FlowLayout
-
-private struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? 0
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var rowHeight: CGFloat = 0
-        for view in subviews {
-            let size = view.sizeThatFits(.unspecified)
-            if x + size.width > maxWidth, x > 0 {
-                x = 0; y += rowHeight + spacing; rowHeight = 0
-            }
-            x += size.width + spacing
-            rowHeight = max(rowHeight, size.height)
+struct AdaptsToKeyboard: ViewModifier {
+    @State var currentHeight: CGFloat = 0
+    
+    func body(content: Content) -> some View {
+        GeometryReader { geometry in
+            content
+                .padding(.bottom, self.currentHeight)
+                .onAppear(perform: {
+                    NotificationCenter.Publisher(center: NotificationCenter.default, name: UIResponder.keyboardWillShowNotification)
+                        .merge(with: NotificationCenter.Publisher(center: NotificationCenter.default, name: UIResponder.keyboardWillChangeFrameNotification))
+                        .compactMap { notification in
+                            withAnimation(.easeOut(duration: 0.16)) {
+                                notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
+                            }
+                    }
+                    .map { rect in
+                        rect.height - geometry.safeAreaInsets.bottom
+                    }
+                    .subscribe(Subscribers.Assign(object: self, keyPath: \.currentHeight))
+                    
+                    NotificationCenter.Publisher(center: NotificationCenter.default, name: UIResponder.keyboardWillHideNotification)
+                        .compactMap { notification in
+                            CGFloat.zero
+                    }
+                    .subscribe(Subscribers.Assign(object: self, keyPath: \.currentHeight))
+                })
         }
-        return CGSize(width: maxWidth, height: y + rowHeight)
     }
+}
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x = bounds.minX
-        var y = bounds.minY
-        var rowHeight: CGFloat = 0
-        for view in subviews {
-            let size = view.sizeThatFits(.unspecified)
-            if x + size.width > bounds.maxX, x > bounds.minX {
-                x = bounds.minX; y += rowHeight + spacing; rowHeight = 0
-            }
-            view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-            x += size.width + spacing
-            rowHeight = max(rowHeight, size.height)
-        }
+extension View {
+    func adaptsToKeyboard() -> some View {
+        return modifier(AdaptsToKeyboard())
     }
 }
