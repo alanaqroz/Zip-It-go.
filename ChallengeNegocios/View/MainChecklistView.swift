@@ -8,6 +8,24 @@
 import SwiftUI
 import PostHog
 
+// MARK: - Share sheet wrapper
+private struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+    func updateUIViewController(_ uvc: UIActivityViewController, context: Context) {}
+}
+
+// MARK: - Screenshot helper
+private func captureScreen() -> UIImage? {
+    guard let window = UIApplication.shared.connectedScenes
+        .compactMap({ $0 as? UIWindowScene })
+        .first?.keyWindow else { return nil }
+    let renderer = UIGraphicsImageRenderer(bounds: window.bounds)
+    return renderer.image { ctx in window.layer.render(in: ctx.cgContext) }
+}
+
 struct MainChecklistView: View {
     var vm: ChecklistViewModel
     var onVoltar: (() -> Void)? = nil
@@ -19,6 +37,8 @@ struct MainChecklistView: View {
     @State private var nomeNovoItem = ""
     @State private var buscaAtiva = false
     @State private var textoBusca = ""
+    @State private var imagemExportada: UIImage? = nil
+    @State private var mostraShareSheet = false
 
     // MARK: - Export text
 
@@ -109,9 +129,9 @@ struct MainChecklistView: View {
                         } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: "plus")
-                                    .font(.subheadline.weight(.semibold))
+                                    .font(.body.weight(.semibold))
                                 Text("Add item to \(cat)")
-                                    .font(.subheadline)
+                                    .font(.body)
                             }
                             .foregroundStyle(Color("Button"))
                             .padding(.top, 4)
@@ -128,7 +148,7 @@ struct MainChecklistView: View {
                             let marcados = (itensAgrupados[cat] ?? []).filter { $0.estaMarcado }.count
                             let total = (itensAgrupados[cat] ?? []).count
                             Text("\(marcados)/\(total)")
-                                .font(.subheadline)
+                                .font(.body)
                                 .foregroundColor(.secondary)
                         }
                         .textCase(nil)
@@ -146,6 +166,11 @@ struct MainChecklistView: View {
             }
         }
         .navigationBarHidden(true)
+        .sheet(isPresented: $mostraShareSheet) {
+            if let img = imagemExportada {
+                ShareSheet(items: [img])
+            }
+        }
         .alert("Add to \(categoriaParaAdicionar)", isPresented: $mostraAdicionarItem) {
             TextField("Item name", text: $nomeNovoItem)
             Button("Add") {
@@ -163,59 +188,80 @@ struct MainChecklistView: View {
     // MARK: - Nav row
 
     private var navRow: some View {
-        HStack {
-            Button {
-                if let onVoltar {
-                    onVoltar()
-                } else {
-                    dismiss()
-                }
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.primary)
-                    .frame(width: 40, height: 40)
-            }
-            .glassEffect(in: Circle())
-
-            Spacer()
-
-            HStack(spacing: 0) {
+        VStack(spacing: 10) {
+            // Linha de botões
+            HStack {
                 Button {
-                    withAnimation { buscaAtiva.toggle() }
+                    if let onVoltar { onVoltar() } else { dismiss() }
                 } label: {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 17, weight: .semibold))
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.primary)
-                        .frame(width: 46, height: 40)
+                        .frame(width: 40, height: 40)
                 }
+                .glassEffect(in: Circle())
 
-                Menu {
-                    ShareLink(
-                        item: textoCompartilhavel,
-                        preview: SharePreview("Packing List — \(vm.destinoSelecionado)")
-                    ) {
-                        Label("Export list", systemImage: "square.and.arrow.up")
+                Spacer()
+
+                HStack(spacing: 0) {
+                    // Lupa — abre/fecha barra de busca no topo
+                    Button {
+                        withAnimation(.spring(duration: 0.3)) { buscaAtiva.toggle() }
+                        if !buscaAtiva { textoBusca = "" }
+                    } label: {
+                        Image(systemName: buscaAtiva ? "xmark" : "magnifyingglass")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .frame(width: 46, height: 40)
                     }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .frame(width: 46, height: 40)
+
+                    // Exportar — captura screenshot da tela atual
+                    Button {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            imagemExportada = captureScreen()
+                            mostraShareSheet = true
+                        }
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .frame(width: 46, height: 40)
+                    }
                 }
+                .glassEffect(in: Capsule())
             }
-            .glassEffect(in: Capsule())
+
+            // Barra de busca — aparece abaixo dos botões com glass
+            if buscaAtiva {
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.secondary)
+                    TextField("Search items...", text: $textoBusca)
+                        .foregroundColor(.primary)
+                        .autocorrectionDisabled()
+                    if !textoBusca.isEmpty {
+                        Button { textoBusca = "" } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .glassEffect(in: Capsule())
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
         .padding(.horizontal, 24)
-        .padding(.top, 40)
-        .padding(.vertical, 8)
+        .padding(.top, 70)
+        .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 10 : 0)
+        .padding(.bottom, 8)
     }
 
     // MARK: - Title + weather + progress
 
     private var titleWeatherProgress: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Title + date
             VStack(spacing: 6) {
                 Text("\(vm.destinoSelecionado).")
                     .font(.system(size: 28, weight: .bold))
@@ -226,27 +272,12 @@ struct MainChecklistView: View {
                     Image(systemName: "calendar")
                         .font(.caption)
                     Text(vm.periodoFormatado)
-                        .font(.subheadline)
+                        .font(.body)
                 }
                 .foregroundColor(.secondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.bottom, 20)
-
-            // Search bar
-            if buscaAtiva {
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass").foregroundColor(.secondary)
-                    TextField("Search items...", text: $textoBusca)
-                        .foregroundColor(.primary)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 12)
-                .background(.regularMaterial)
-                .cornerRadius(AppLayout.raioCantos)
-                //.padding(.bottom, 16)
-                .transition(.opacity.combined(with: .move(edge: .top)))
-            }
 
             // Weather card
             if vm.tempMin != nil || !vm.estacao.isEmpty {
@@ -283,13 +314,11 @@ struct MainChecklistView: View {
                                 Text("\(Int(tMax))°C")
                                     .font(.system(size: 20, weight: .bold))
                             }
-                            // CORREÇÃO 4: primary
                             .foregroundStyle(.primary)
                         }
                         if !vm.condicaoClima.isEmpty {
                             Text(vm.condicaoClima.capitalized)
-                                .font(.subheadline)
-                                // CORREÇÃO 4: Usando primary com opacidade
+                                .font(.body)
                                 .foregroundStyle(.primary.opacity(0.85))
                         }
                     }
@@ -299,8 +328,7 @@ struct MainChecklistView: View {
 
                 if !vm.estacao.isEmpty {
                     Text(vm.estacao)
-                        .font(.subheadline.weight(.semibold))
-                        // CORREÇÃO 4: primary
+                        .font(.body.weight(.semibold))
                         .foregroundStyle(.primary)
                 }
             }
@@ -311,9 +339,16 @@ struct MainChecklistView: View {
     }
 
     private var weatherIcon: String {
+        let c = vm.condicaoClima.lowercased()
+        if c.contains("thunder") || c.contains("storm")               { return "cloud.bolt.rain.fill" }
+        if c.contains("snow") || c.contains("blizzard") || c.contains("sleet") || c.contains("flurr") { return "cloud.snow.fill" }
+        if c.contains("rain") || c.contains("drizzle") || c.contains("shower") { return "cloud.drizzle.fill" }
+        if c.contains("cloud") || c.contains("overcast") || c.contains("fog") || c.contains("haz") { return "smoke.fill" }
+        if c.contains("clear") || c.contains("sun") || c.contains("hot") { return "sun.max.fill" }
+        // fallback por temperatura
         guard let tMax = vm.tempMax else { return "cloud.fill" }
         if tMax >= 25 { return "sun.max.fill" }
-        if tMax < 15 { return "snowflake" }
+        if tMax < 5  { return "cloud.snow.fill" }
         return "cloud.sun.fill"
     }
 
@@ -385,9 +420,8 @@ struct MainChecklistView: View {
                 }
                 .buttonStyle(.plain)
 
-                // Name
                 Text(item.nomeApenas)
-                    .font(.subheadline)
+                    .font(.body)
                     .strikethrough(item.estaMarcado, color: .secondary)
                     .foregroundColor(item.estaMarcado ? .secondary : .primary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -395,7 +429,7 @@ struct MainChecklistView: View {
                 // Quantity
                 if item.estaMarcado {
                     Text("\(item.quantidade)")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.body.weight(.semibold))
                         .foregroundColor(.secondary)
                         .frame(minWidth: 28, alignment: .center)
                         .padding(.horizontal, 12)
@@ -419,7 +453,7 @@ struct MainChecklistView: View {
                         .buttonStyle(.plain)
 
                         Text("\(item.quantidade)")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.body.weight(.semibold))
                             .foregroundColor(.primary)
                             .frame(minWidth: 28, alignment: .center)
 

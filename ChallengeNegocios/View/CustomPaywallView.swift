@@ -19,9 +19,9 @@ struct CustomPaywallView: View {
     private var manager = SubscriptionManager.shared
 
     private let fallbackPlans: [(title: String, price: String, period: String?, bestDeal: Bool)] = [
-        ("Lifetime", "$ 49,90", nil, true),
-        ("Monthly", "$ 4,90", "/ Month", false),
-        ("Yearly", "$ 19,90", "/ Year", false),
+        ("Lifetime", "$ 49,99", nil, true),
+        ("Monthly", "$ 4,99", "/ Month", false),
+        ("Yearly", "$ 19,99", "/ Year", false),
     ]
 
     var body: some View {

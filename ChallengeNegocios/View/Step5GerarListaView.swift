@@ -26,7 +26,6 @@ struct Step5GerarListaView: View {
             if checklistVM.carregando && checklistVM.itens.isEmpty {
                 loadingView
             } else {
-                // Back button vai direto pra Home (fecharOnboarding), não volta pro edit
                 MainChecklistView(
                     vm: checklistVM,
                     onVoltar: fecharOnboarding
@@ -73,8 +72,8 @@ struct Step5GerarListaView: View {
                         .foregroundStyle(.primary)
 
                     Text("Making sure you won't forget a thing...")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(.body)
+                        .foregroundStyle(.primary)
                         .multilineTextAlignment(.center)
                 }
 

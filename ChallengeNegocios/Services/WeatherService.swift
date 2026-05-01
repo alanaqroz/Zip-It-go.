@@ -99,10 +99,11 @@ actor WeatherService {
         let tempMax  = maximas.max() ?? 0
         let mediaGeral = medias.reduce(0, +) / Double(medias.count)
 
-        // 6. Condições únicas em português
-        let condicoes = Array(Set(dias.map { traduzirCondicao($0.condition) }))
-            .prefix(3)
-            .joined(separator: ", ")
+        // 6. Condição dominante — a que aparece mais dias no período
+        let condicoes = dias
+            .map { traduzirCondicao($0.condition) }
+            .reduce(into: [:]) { counts, c in counts[c, default: 0] += 1 }
+            .max(by: { $0.value < $1.value })?.key ?? ""
 
         // 7. Estação com base no mês de início e hemisfério
         let mes = Calendar.current.component(.month, from: dataInicio)
@@ -133,43 +134,43 @@ actor WeatherService {
     private func detectarEstacao(mes: Int, latitude: Double) -> String {
         let hemisferioSul = latitude < 0
         switch mes {
-        case 12, 1, 2:  return hemisferioSul ? "Verão"    : "Inverno"
-        case 3, 4, 5:   return hemisferioSul ? "Outono"   : "Primavera"
-        case 6, 7, 8:   return hemisferioSul ? "Inverno"  : "Verão"
-        case 9, 10, 11: return hemisferioSul ? "Primavera": "Outono"
+        case 12, 1, 2:  return hemisferioSul ? "Summer" : "Winter"
+        case 3, 4, 5:   return hemisferioSul ? "Fall"   : "Spring"
+        case 6, 7, 8:   return hemisferioSul ? "Winter" : "Summer"
+        case 9, 10, 11: return hemisferioSul ? "Spring" : "Fall"
         default:         return ""
         }
     }
 
     private func traduzirCondicao(_ condition: WeatherCondition) -> String {
         switch condition {
-        case .clear:                    return "céu limpo"
-        case .mostlyClear:              return "predominantemente limpo"
-        case .partlyCloudy:             return "parcialmente nublado"
-        case .mostlyCloudy:             return "predominantemente nublado"
-        case .cloudy:                   return "nublado"
-        case .foggy:                    return "neblina"
-        case .haze:                     return "névoa"
-        case .drizzle:                  return "garoa"
-        case .rain:                     return "chuva"
-        case .heavyRain:                return "chuva intensa"
-        case .isolatedThunderstorms:    return "trovoadas isoladas"
-        case .scatteredThunderstorms:   return "trovoadas esparsas"
-        case .thunderstorms:            return "tempestade"
-        case .snow:                     return "neve"
-        case .heavySnow:                return "neve intensa"
-        case .flurries:                 return "rajadas de neve"
-        case .blowingSnow:              return "neve com vento"
-        case .blizzard:                 return "nevasca"
-        case .sleet:                    return "granizo"
-        case .freezingRain:             return "chuva congelante"
-        case .hot:                      return "muito quente"
-        case .windy:                    return "ventoso"
-        case .breezy:                   return "brisa"
-        case .sunShowers:               return "chuva com sol"
-        case .tropicalStorm:            return "tempestade tropical"
-        case .hurricane:                return "furacão"
-        default:                        return "variável"
+        case .clear:                    return "clear"
+        case .mostlyClear:              return "mostly clear"
+        case .partlyCloudy:             return "partly cloudy"
+        case .mostlyCloudy:             return "mostly cloudy"
+        case .cloudy:                   return "cloudy"
+        case .foggy:                    return "foggy"
+        case .haze:                     return "hazy"
+        case .drizzle:                  return "drizzle"
+        case .rain:                     return "rain"
+        case .heavyRain:                return "heavy rain"
+        case .isolatedThunderstorms:    return "isolated thunderstorms"
+        case .scatteredThunderstorms:   return "scattered thunderstorms"
+        case .thunderstorms:            return "thunderstorms"
+        case .snow:                     return "snow"
+        case .heavySnow:                return "heavy snow"
+        case .flurries:                 return "snow flurries"
+        case .blowingSnow:              return "blowing snow"
+        case .blizzard:                 return "blizzard"
+        case .sleet:                    return "sleet"
+        case .freezingRain:             return "freezing rain"
+        case .hot:                      return "very hot"
+        case .windy:                    return "windy"
+        case .breezy:                   return "breezy"
+        case .sunShowers:               return "sun showers"
+        case .tropicalStorm:            return "tropical storm"
+        case .hurricane:                return "hurricane"
+        default:                        return "variable"
         }
     }
 }

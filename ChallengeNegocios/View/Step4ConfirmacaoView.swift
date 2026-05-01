@@ -51,8 +51,8 @@ struct Step4ConfirmacaoView: View {
                         .foregroundStyle(.primary)
 
                     Text("Review your details before we build your list.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(.body)
+                        .foregroundStyle(.primary)
                         .padding(.top, 8)
                         .padding(.bottom, 24)
 
@@ -111,7 +111,7 @@ struct Step4ConfirmacaoView: View {
                         }
                     }
                     .background(.regularMaterial)
-                    .cornerRadius(AppLayout.raioCantos)
+                    .cornerRadius(24)
                     .padding(.bottom, 16)
 
                     // MARK: Banner aviso
@@ -121,13 +121,13 @@ struct Step4ConfirmacaoView: View {
                             .foregroundStyle(Color("Button"))
 
                         Text("Please double-check your details. The list can't be edited once it's generated.")
-                            .font(.subheadline)
+                            .font(.body)
                             .foregroundStyle(.primary)
                     }
                     .padding(14)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color("Icon").opacity(0.25))
-                    .cornerRadius(AppLayout.raioCantos)
+                    .cornerRadius(24)
                     .padding(.bottom, AppLayout.alturaBotao + 32)
                 }
                 .padding(.horizontal, AppLayout.espacamento)
@@ -139,6 +139,7 @@ struct Step4ConfirmacaoView: View {
                     mostraAlerta = true
                 }
             }
+            .padding(.bottom, 40)
 
             // MARK: Alerta inline
             if mostraAlerta {
@@ -153,7 +154,7 @@ struct Step4ConfirmacaoView: View {
                             .foregroundStyle(.primary)
 
                         Text("Your list can't be changed after it's created.")
-                            .font(.subheadline)
+                            .font(.body)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
@@ -184,7 +185,7 @@ struct Step4ConfirmacaoView: View {
 
                         Button { mostraAlerta = false } label: {
                             Text("Go Back")
-                                .font(.subheadline)
+                                .font(.body)
                                 .fontWeight(.semibold)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 52)
@@ -232,7 +233,7 @@ private struct ResumoLinhaView: View {
             Button(action: onEditar) {
                 HStack(spacing: 2) {
                     Text("Edit")
-                        .font(.subheadline)
+                        .font(.body)
                     Image(systemName: "chevron.right")
                         .font(.caption.weight(.semibold))
                 }

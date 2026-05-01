@@ -15,48 +15,43 @@ struct Step1DestinoView: View {
     var body: some View {
         @Bindable var vm = vm
 
-        ZStack {
-            // MARK: Background
+        ZStack(alignment: .bottom) {
+            
             Image("AppFundaTelaPerguntas")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
 
-            // MARK: Conteúdo com botão
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
 
-
-                    // Indicador de etapas
                     StepIndicatorView(etapaAtual: 1, totalEtapas: 4)
                         .padding(.bottom, 24)
 
-                    // Título
                     Text("Where are you going?")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(.primary)
 
-                    // Subtítulo
                     Text("Enter your destination and travel dates.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(.body)
+                        .foregroundStyle(.primary)
                         .padding(.top, 8)
                         .padding(.bottom, 24)
 
-                    // MARK: Seção DESTINATION
+                    // MARK: DESTINATION
                     VStack(alignment: .leading, spacing: 8) {
                         Label {
                             Text("DESTINATION").tracking(0.8)
                         } icon: {
-                            Image(systemName: "location.north.fill")
+                            Image(systemName: "location.circle")
                         }
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
 
-                        // Campo de busca
                         HStack(spacing: 10) {
                             Image(systemName: "magnifyingglass")
                                 .foregroundStyle(.secondary)
+
                             TextField(
                                 "",
                                 text: $locService.busca,
@@ -69,18 +64,23 @@ struct Step1DestinoView: View {
                         .padding(.horizontal, AppLayout.espacamentoInterno)
                         .padding(.vertical, 14)
                         .background(.regularMaterial)
-                        .cornerRadius(AppLayout.raioCantos)
+                        .cornerRadius(26)
 
-                        // Sugestões
-                        if !locService.sugestoes.isEmpty && locService.busca != vm.viagem.destino {
+                        if !locService.sugestoes.isEmpty &&
+                            locService.busca != vm.viagem.destino {
+
                             VStack(alignment: .leading, spacing: 0) {
                                 ForEach(locService.sugestoes.prefix(5), id: \.self) { sugestao in
                                     Button {
                                         vm.viagem.destino = sugestao.title
                                         locService.busca = sugestao.title
                                         locService.sugestoes = []
-                                        PostHogSDK.shared.capture("onboarding_destination_set",
-                                            properties: ["destination": sugestao.title])
+
+                                        PostHogSDK.shared.capture(
+                                            "onboarding_destination_set",
+                                            properties: ["destination": sugestao.title]
+                                        )
+
                                         UIApplication.shared.sendAction(
                                             #selector(UIResponder.resignFirstResponder),
                                             to: nil, from: nil, for: nil
@@ -88,8 +88,9 @@ struct Step1DestinoView: View {
                                     } label: {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(sugestao.title)
-                                                .font(.subheadline)
+                                                .font(.body)
                                                 .foregroundStyle(.primary)
+
                                             if !sugestao.subtitle.isEmpty {
                                                 Text(sugestao.subtitle)
                                                     .font(.caption)
@@ -100,6 +101,7 @@ struct Step1DestinoView: View {
                                         .padding(.horizontal, AppLayout.espacamentoInterno)
                                         .padding(.vertical, 10)
                                     }
+
                                     if sugestao != locService.sugestoes.prefix(5).last {
                                         Divider().padding(.leading, AppLayout.espacamentoInterno)
                                     }
@@ -111,7 +113,7 @@ struct Step1DestinoView: View {
                     }
                     .padding(.bottom, 20)
 
-                    // MARK: Seção TRAVEL DATES
+                    // MARK: TRAVEL DATES
                     VStack(alignment: .leading, spacing: 8) {
                         Label {
                             Text("TRAVEL DATES").tracking(0.8)
@@ -148,25 +150,25 @@ struct Step1DestinoView: View {
                             .padding(.vertical, 14)
                         }
                         .background(.regularMaterial)
-                        .cornerRadius(AppLayout.raioCantos)
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                     }
+
+                    Color.clear.frame(height: AppLayout.alturaBotao + 100)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, AppLayout.espacamento)
                 .padding(.top, 80)
-                .padding(.bottom, AppLayout.alturaBotao + 60)
             }
-            .ignoresSafeArea(.keyboard)
-            .scrollDismissesKeyboard(.immediately)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                // MARK: Botão fixo no rodapé
-                BotaoContinuarView(ativo: !vm.viagem.destino.isEmpty) {
-                    PostHogSDK.shared.capture("onboarding_step1_completed", properties: [
-                        "destination": vm.viagem.destino,
-                        "days": vm.viagem.quantidadeDias
-                    ])
-                    vm.avancar(para: 2)
-                }
+
+            // MARK: Botão fixo
+            BotaoContinuarView(ativo: !vm.viagem.destino.isEmpty) {
+                PostHogSDK.shared.capture("onboarding_step1_completed", properties: [
+                    "destination": vm.viagem.destino,
+                    "days": vm.viagem.quantidadeDias
+                ])
+                vm.avancar(para: 2)
             }
+            .padding(.bottom, 40)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -198,18 +200,28 @@ struct StepIndicatorView: View {
 }
 
 // MARK: - BotaoContinuarView
-
 struct BotaoContinuarView: View {
     let ativo: Bool
     var rotulo: String = "Continue"
     let acao: () -> Void
 
+    private var isPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+
+    private var safeBottom: CGFloat {
+        let windowSafeArea = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.keyWindow?.safeAreaInsets.bottom ?? 0
+        return windowSafeArea + (isPad ? 20 : 16)
+    }
+
     var body: some View {
         Button(action: acao) {
             Text(rotulo)
-                .font(.headline)
-                .fontWeight(.bold)
-                .frame(maxWidth: .infinity)
+                .font(.body)
+                .fontWeight(.semibold)
+                .frame(maxWidth: isPad ? 480 : .infinity)
                 .frame(height: AppLayout.alturaBotao)
                 .background(
                     ativo ? Color("Button") : Color.primary.opacity(0.12)
@@ -227,9 +239,8 @@ struct BotaoContinuarView: View {
                 )
         }
         .disabled(!ativo)
-        .padding(.horizontal, AppLayout.espacamento)
+        .padding(.horizontal, isPad ? 40 : AppLayout.espacamento)
         .padding(.top, 12)
-        .padding(.bottom, 28)
-        .ignoresSafeArea(.container, edges: .bottom)
+        .padding(.bottom, safeBottom)
     }
 }

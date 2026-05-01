@@ -17,8 +17,10 @@ class ChecklistViewModel {
     var dataVolta: Date = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
     var tipoViagem: String = ""
     var atividades: String = ""
+    var numAdultos: Int = 1
     var numCriancas: Int = 0
     var numBebes: Int = 0
+    var outraAtividade: String = ""
 
     func configurar(com viagem: Viagem) {
         destinoSelecionado = viagem.destino
@@ -26,8 +28,10 @@ class ChecklistViewModel {
         dataVolta          = viagem.dataVolta
         tipoViagem         = viagem.tipoViagem.rawValue
         atividades         = viagem.resumoAtividades
+        numAdultos         = viagem.numAdultos
         numCriancas        = viagem.numCriancas
         numBebes           = viagem.numBebes
+        outraAtividade     = viagem.outraAtividade
     }
 
     // MARK: - Weather display
@@ -183,10 +187,11 @@ class ChecklistViewModel {
         // Footwear
         linhasBase.append("Footwear#1 Comfortable sneakers")
 
-        // Documents
+        // Documents — quantidade de passaportes = número de adultos + crianças (bebês usam o mesmo)
+        let totalViajantesComDoc = numAdultos + numCriancas + numBebes
         if foraDoBrasil {
             linhasBase += [
-                "Documents#Passport",
+                "Documents#\(totalViajantesComDoc) Passport\(totalViajantesComDoc > 1 ? "s" : "")",
                 "Documents#Travel insurance",
                 "Documents#Hotel confirmation",
                 "Documents#Flight tickets",
@@ -196,7 +201,7 @@ class ChecklistViewModel {
             ]
         } else {
             linhasBase += [
-                "Documents#ID / Driver's license",
+                "Documents#\(totalViajantesComDoc) ID / Driver's license",
                 "Documents#Flight tickets",
                 "Documents#Reservations",
                 "Documents#Credit/debit cards",
@@ -237,31 +242,62 @@ class ChecklistViewModel {
             "Electronics#Travel adapter"
         ]
 
-        // Kids (ages 2–12)
+        // Kids (ages 2–12) — mesma lógica de quantidade dos adultos, multiplicada por criança
         if numCriancas > 0 {
+            let kTshirts  = numCriancas * min(dias + 1, 10)
+            let kUnderwear = numCriancas * min(dias + 2, 15)
+            let kSocks    = numCriancas * min(dias + 2, 12)
+            let kPants    = numCriancas * max(1, Int(ceil(Double(dias) / 3.0)))
+            let kPajamas  = numCriancas * max(1, Int(ceil(Double(dias) / 3.0)))
+
             linhasBase += [
-                "Kids#\(numCriancas) Kids' pajamas",
-                "Kids#Extra clothes for the kids",
-                "Kids#Kids' sunscreen",
+                "Kids#\(kTshirts) Kids' T-shirts",
+                "Kids#\(kUnderwear) Kids' underwear",
+                "Kids#\(kSocks) Kids' socks",
+                "Kids#\(kPants) Kids' pants",
+                "Kids#\(kPajamas) Kids' pajamas",
+                "Kids#\(numCriancas) Kids' sneakers",
+                "Kids#Kids' sunscreen SPF 50+",
                 "Kids#Children's medicine (fever, pain)",
                 "Kids#Kids' backpack",
                 "Kids#Entertainment (tablet, books)"
             ]
+            // Roupas de frio para crianças se necessário
+            if classificacao == "FRIO" {
+                linhasBase += [
+                    "Kids#\(numCriancas) Kids' coat",
+                    "Kids#\(numCriancas) Kids' gloves",
+                    "Kids#\(numCriancas) Kids' beanie"
+                ]
+            }
         }
 
-        // Baby (ages 0–2)
+        // Baby (ages 0–2) — roupas calculadas por dias + itens essenciais
         if numBebes > 0 {
-            let diapers = numBebes * dias * 6
+            let diapers    = numBebes * dias * 6
+            let bOnesies   = numBebes * min(dias * 2, 14)   // ~2 macacões por dia
+            let bPajamas   = numBebes * max(1, Int(ceil(Double(dias) / 2.0)))
+            let bSocks     = numBebes * min(dias + 2, 10)
+
             linhasBase += [
                 "Baby#\(diapers) Diapers",
+                "Baby#\(bOnesies) Baby onesies",
+                "Baby#\(bPajamas) Baby pajamas",
+                "Baby#\(bSocks) Baby socks",
+                "Baby#\(numBebes) Baby shoes",
                 "Baby#Diaper rash cream",
                 "Baby#Baby wet wipes",
                 "Baby#Baby bottle",
                 "Baby#Baby formula",
                 "Baby#Thermometer",
-                "Baby#Extra baby clothes",
                 "Baby#Pacifier"
             ]
+            if classificacao == "FRIO" {
+                linhasBase += [
+                    "Baby#\(numBebes) Baby snowsuit",
+                    "Baby#\(numBebes) Baby mittens"
+                ]
+            }
         }
 
         //  todos os itens base
@@ -274,26 +310,47 @@ class ChecklistViewModel {
             return item
         }
 
+        // Resumo dos viajantes para o prompt
+        var viajantesResumo = "\(numAdultos) adult\(numAdultos > 1 ? "s" : "")"
+        if numCriancas > 0 { viajantesResumo += ", \(numCriancas) kid\(numCriancas > 1 ? "s" : "")" }
+        if numBebes    > 0 { viajantesResumo += ", \(numBebes) baby\(numBebes > 1 ? "/babies" : "")" }
+
+        // Categorias já incluídas na lista base — a IA não deve repetir itens dessas categorias
+        let categoriasBase = Array(Set(linhasBase.compactMap { $0.split(separator: "#").first.map(String.init) }))
+            .sorted().joined(separator: ", ")
+
+        // Atividade extra digitada pelo usuário (campo livre)
+        let atividadeExtra = outraAtividade.trimmingCharacters(in: .whitespaces)
+
         let instrucaoIA = """
-        You are a travel assistant. Generate ONLY specific extra items for the trip below that are NOT common clothing, documents, basic toiletries, basic electronics, or basic medicine — those are already on the list.
+        You are an expert travel packing assistant. Your job is to suggest ONLY items that are truly missing from the list below.
 
-        TRIP: \(destinoSelecionado) — \(dias) days — \(climaResumo)
-        TYPE: \(tipoViagem.isEmpty ? "Leisure" : tipoViagem)
-        ACTIVITIES: \(atividades.isEmpty ? "None specified" : atividades)
+        TRIP DETAILS:
+        - Destination: \(destinoSelecionado)
+        - Duration: \(dias) days
+        - Weather: \(climaResumo.isEmpty ? "unknown" : climaResumo)
+        - Trip type: \(tipoViagem.isEmpty ? "Leisure" : tipoViagem)
+        - Travelers: \(viajantesResumo)
+        - Planned activities: \(atividades.isEmpty ? "None specified" : atividades)\(atividadeExtra.isEmpty ? "" : ", \(atividadeExtra)")
 
-        Examples: specific sports gear, special adapters, destination-specific cultural items.
-        Maximum 6 extra items. If nothing relevant, reply only: NONE
+        ALREADY INCLUDED IN THE LIST (do NOT suggest items from these categories):
+        \(categoriasBase)
+
+        YOUR TASK: Suggest destination-specific or activity-specific items that are NOT already covered above.
+        Focus on: special gear for activities, local cultural necessities, climate-specific items beyond basic clothing.
+        If there is truly nothing to add, reply only: NONE
 
         MANDATORY FORMAT — ONE ITEM PER LINE:
         Category#ItemName
         ALLOWED CATEGORIES: Clothing, Footwear, Toiletries, Health & Meds, Electronics
-        FORBIDDEN: markdown, emojis, commas between items, explanatory text
+        Maximum 6 items. No markdown, no emojis, no explanations.
         """
 
         var itensExtras: [ItemMala] = []
         do {
             let session = LanguageModelSession(instructions: instrucaoIA)
-            let response = try await session.respond(to: "Extra items for \(destinoSelecionado).")
+            let query = "Suggest extra packing items for a \(dias)-day \(tipoViagem.isEmpty ? "leisure" : tipoViagem.lowercased()) trip to \(destinoSelecionado) (\(climaResumo.isEmpty ? "weather unknown" : climaResumo)) for \(viajantesResumo)\(atividades.isEmpty ? "" : ", activities: \(atividades)")."
+            let response = try await session.respond(to: query)
 
             if !response.content.uppercased().contains("NONE") {
                 itensExtras = response.content
