@@ -17,13 +17,188 @@ private struct ShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ uvc: UIActivityViewController, context: Context) {}
 }
 
-// MARK: - Screenshot helper
-private func captureScreen() -> UIImage? {
-    guard let window = UIApplication.shared.connectedScenes
-        .compactMap({ $0 as? UIWindowScene })
-        .first?.keyWindow else { return nil }
-    let renderer = UIGraphicsImageRenderer(bounds: window.bounds)
-    return renderer.image { ctx in window.layer.render(in: ctx.cgContext) }
+// MARK: - PDF Export helper
+private func gerarPDF(vm: ChecklistViewModel,
+                      categoriasOrdenadas: [String],
+                      itensAgrupados: [String: [ItemMala]]) -> URL? {
+
+    let pageWidth: CGFloat  = 595   // A4 largura em pontos
+    let margin:    CGFloat  = 36
+    let contentW:  CGFloat  = pageWidth - margin * 2
+
+    // ── Cores ───────────────────────────────────────────────────
+    let corFundo    = UIColor(red: 0.06, green: 0.04, blue: 0.18, alpha: 1)
+    let corAccent   = UIColor(red: 0.71, green: 0.95, blue: 0.24, alpha: 1)
+    let corBranco   = UIColor.white
+    let corCinza    = UIColor(white: 1, alpha: 0.55)
+    let corCard     = UIColor(white: 1, alpha: 0.07)
+
+    // ── Fonte helpers ────────────────────────────────────────────
+    func bold(_ size: CGFloat)    -> UIFont { .systemFont(ofSize: size, weight: .bold) }
+    func regular(_ size: CGFloat) -> UIFont { .systemFont(ofSize: size, weight: .regular) }
+    func heavy(_ size: CGFloat)   -> UIFont { .systemFont(ofSize: size, weight: .heavy) }
+
+    // ── Calcular altura total necessária ─────────────────────────
+    var totalH: CGFloat = margin + 80 + 16 + 24 + 16 + 24 + 20 + 32   // header fixo
+
+    for cat in categoriasOrdenadas {
+        let itens = itensAgrupados[cat] ?? []
+        totalH += 32   // cabeçalho categoria
+        totalH += CGFloat(itens.count) * 40   // itens
+        totalH += 16   // espaço após categoria
+    }
+    totalH += margin
+
+    // ── Criar PDF ───────────────────────────────────────────────
+    let pageRect = CGRect(x: 0, y: 0, width: pageWidth, height: totalH)
+    let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
+
+    let tempURL = FileManager.default.temporaryDirectory
+        .appendingPathComponent("ZipIt_PackingList.pdf")
+
+    do {
+        try renderer.writePDF(to: tempURL) { ctx in
+            ctx.beginPage()
+            let cgCtx = ctx.cgContext
+
+            // Fundo
+            cgCtx.setFillColor(corFundo.cgColor)
+            cgCtx.fill(pageRect)
+
+            var y: CGFloat = margin
+
+            // ── Título ──────────────────────────────────────────
+            let titulo = "Zip It! — Packing List"
+            let atTitulo: [NSAttributedString.Key: Any] = [
+                .font: heavy(22), .foregroundColor: corBranco
+            ]
+            titulo.draw(at: CGPoint(x: margin, y: y), withAttributes: atTitulo)
+            y += 30
+
+            // Destino
+            let destino = vm.destinoSelecionado
+            let atDestino: [NSAttributedString.Key: Any] = [
+                .font: bold(15), .foregroundColor: corAccent
+            ]
+            destino.draw(at: CGPoint(x: margin, y: y), withAttributes: atDestino)
+            y += 22
+
+            // Período
+            let periodo = vm.periodoFormatado
+            let atPeriodo: [NSAttributedString.Key: Any] = [
+                .font: regular(12), .foregroundColor: corCinza
+            ]
+            periodo.draw(at: CGPoint(x: margin, y: y), withAttributes: atPeriodo)
+            y += 18
+
+            // Clima
+            if !vm.estacao.isEmpty {
+                let clima: String
+                if let tMin = vm.tempMin, let tMax = vm.tempMax {
+                    clima = "🌤 \(Int(tMin))°C – \(Int(tMax))°C · \(vm.estacao)"
+                } else {
+                    clima = "🌤 \(vm.estacao)"
+                }
+                clima.draw(at: CGPoint(x: margin, y: y), withAttributes: atPeriodo)
+                y += 18
+            }
+
+            // Progresso
+            let totalItens  = itensAgrupados.values.flatMap { $0 }.count
+            let marcados    = itensAgrupados.values.flatMap { $0 }.filter { $0.estaMarcado }.count
+            let progresso   = "✓ \(marcados) of \(totalItens) items packed"
+            progresso.draw(at: CGPoint(x: margin, y: y), withAttributes: atPeriodo)
+            y += 24
+
+            // Linha separadora
+            cgCtx.setStrokeColor(UIColor(white: 1, alpha: 0.15).cgColor)
+            cgCtx.setLineWidth(0.5)
+            cgCtx.move(to: CGPoint(x: margin, y: y))
+            cgCtx.addLine(to: CGPoint(x: pageWidth - margin, y: y))
+            cgCtx.strokePath()
+            y += 20
+
+            // ── Categorias ──────────────────────────────────────
+            for cat in categoriasOrdenadas {
+                let itens = itensAgrupados[cat] ?? []
+
+                // Cabeçalho da categoria
+                let marcadosCat = itens.filter { $0.estaMarcado }.count
+                let labelCat = "\(cat.uppercased())  \(marcadosCat)/\(itens.count)"
+                let atCat: [NSAttributedString.Key: Any] = [
+                    .font: bold(11),
+                    .foregroundColor: corAccent,
+                    .kern: 1.2
+                ]
+                labelCat.draw(at: CGPoint(x: margin, y: y), withAttributes: atCat)
+                y += 22
+
+                // Itens
+                for item in itens {
+                    // Card de fundo
+                    let cardRect = CGRect(x: margin, y: y, width: contentW, height: 32)
+                    cgCtx.setFillColor(corCard.cgColor)
+                    let path = UIBezierPath(roundedRect: cardRect, cornerRadius: 8)
+                    cgCtx.addPath(path.cgPath)
+                    cgCtx.fillPath()
+
+                    // Checkbox
+                    let boxSize: CGFloat = 14
+                    let boxRect = CGRect(x: margin + 10, y: y + 9, width: boxSize, height: boxSize)
+                    if item.estaMarcado {
+                        cgCtx.setFillColor(corAccent.cgColor)
+                        let boxPath = UIBezierPath(roundedRect: boxRect, cornerRadius: 3)
+                        cgCtx.addPath(boxPath.cgPath)
+                        cgCtx.fillPath()
+                        // Check mark
+                        let atCheck: [NSAttributedString.Key: Any] = [
+                            .font: bold(9), .foregroundColor: UIColor.black
+                        ]
+                        "✓".draw(at: CGPoint(x: margin + 12, y: y + 10), withAttributes: atCheck)
+                    } else {
+                        cgCtx.setStrokeColor(UIColor(white: 1, alpha: 0.3).cgColor)
+                        cgCtx.setLineWidth(1)
+                        let boxPath = UIBezierPath(roundedRect: boxRect, cornerRadius: 3)
+                        cgCtx.addPath(boxPath.cgPath)
+                        cgCtx.strokePath()
+                    }
+
+                    // Nome do item
+                    let atItem: [NSAttributedString.Key: Any] = [
+                        .font: regular(12),
+                        .foregroundColor: item.estaMarcado ? corCinza : corBranco
+                    ]
+                    item.nomeApenas.draw(at: CGPoint(x: margin + 34, y: y + 10), withAttributes: atItem)
+
+                    // Quantidade
+                    let qty = "×\(item.quantidade)"
+                    let atQty: [NSAttributedString.Key: Any] = [
+                        .font: regular(11), .foregroundColor: corCinza
+                    ]
+                    let qtyW = (qty as NSString).size(withAttributes: atQty).width
+                    qty.draw(at: CGPoint(x: pageWidth - margin - qtyW - 10, y: y + 11),
+                             withAttributes: atQty)
+
+                    y += 40
+                }
+
+                y += 16   // espaço após categoria
+            }
+
+            // ── Rodapé ──────────────────────────────────────────
+            let rodape = "Generated by Zip It!"
+            let atRodape: [NSAttributedString.Key: Any] = [
+                .font: regular(9), .foregroundColor: corCinza
+            ]
+            let rodapeW = (rodape as NSString).size(withAttributes: atRodape).width
+            rodape.draw(at: CGPoint(x: (pageWidth - rodapeW) / 2, y: y + 8),
+                        withAttributes: atRodape)
+        }
+        return tempURL
+    } catch {
+        print("Erro ao gerar PDF: \(error)")
+        return nil
+    }
 }
 
 struct MainChecklistView: View {
@@ -37,7 +212,7 @@ struct MainChecklistView: View {
     @State private var nomeNovoItem = ""
     @State private var buscaAtiva = false
     @State private var textoBusca = ""
-    @State private var imagemExportada: UIImage? = nil
+    @State private var urlPDFExportado: URL? = nil
     @State private var mostraShareSheet = false
 
     // MARK: - Export text
@@ -167,8 +342,8 @@ struct MainChecklistView: View {
         }
         .navigationBarHidden(true)
         .sheet(isPresented: $mostraShareSheet) {
-            if let img = imagemExportada {
-                ShareSheet(items: [img])
+            if let url = urlPDFExportado {
+                ShareSheet(items: [url])
             }
         }
         .alert("Add to \(categoriaParaAdicionar)", isPresented: $mostraAdicionarItem) {
@@ -215,11 +390,15 @@ struct MainChecklistView: View {
                             .frame(width: 46, height: 40)
                     }
 
-                    // Exportar — captura screenshot da tela atual
+                    // Exportar — gera PDF com a lista completa
                     Button {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                            imagemExportada = captureScreen()
-                            mostraShareSheet = true
+                        DispatchQueue.main.async {
+                            urlPDFExportado = gerarPDF(
+                                vm: vm,
+                                categoriasOrdenadas: categoriasOrdenadas,
+                                itensAgrupados: itensAgrupados
+                            )
+                            mostraShareSheet = urlPDFExportado != nil
                         }
                     } label: {
                         Image(systemName: "square.and.arrow.up")
@@ -279,9 +458,23 @@ struct MainChecklistView: View {
             .frame(maxWidth: .infinity)
             .padding(.bottom, 20)
 
-            // Weather card
+            // Weather card + WeatherKit attribution
             if vm.tempMin != nil || !vm.estacao.isEmpty {
-                weatherCard.padding(.bottom, 20)
+                VStack(alignment: .trailing, spacing: 6) {
+                    weatherCard
+
+                    // Atribuição obrigatória do WeatherKit (Apple guideline)
+                    Link(destination: URL(string: "https://weatherkit.apple.com/legal-attribution.html")!) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "apple.logo")
+                                .font(.system(size: 10, weight: .medium))
+                            Text("Weather")
+                                .font(.system(size: 10, weight: .medium))
+                        }
+                        .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.bottom, 20)
             }
 
             // Progress

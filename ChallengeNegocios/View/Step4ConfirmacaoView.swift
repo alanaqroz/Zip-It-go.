@@ -138,8 +138,9 @@ struct Step4ConfirmacaoView: View {
                 BotaoContinuarView(ativo: true, rotulo: "✦  Generate My Packing List") {
                     mostraAlerta = true
                 }
+                .padding(40)
             }
-            .padding(.bottom, 40)
+            
 
             // MARK: Alerta inline
             if mostraAlerta {

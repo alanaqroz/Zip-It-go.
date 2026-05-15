@@ -167,8 +167,9 @@ struct Step1DestinoView: View {
                     "days": vm.viagem.quantidadeDias
                 ])
                 vm.avancar(para: 2)
+                
             }
-            .padding(.bottom, 40)
+            .padding(40)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -209,13 +210,6 @@ struct BotaoContinuarView: View {
         UIDevice.current.userInterfaceIdiom == .pad
     }
 
-    private var safeBottom: CGFloat {
-        let windowSafeArea = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?.keyWindow?.safeAreaInsets.bottom ?? 0
-        return windowSafeArea + (isPad ? 20 : 16)
-    }
-
     var body: some View {
         Button(action: acao) {
             Text(rotulo)
@@ -239,8 +233,10 @@ struct BotaoContinuarView: View {
                 )
         }
         .disabled(!ativo)
-        .padding(.horizontal, isPad ? 40 : AppLayout.espacamento)
+        .padding(.horizontal, isPad ? 60 : AppLayout.espacamento)
         .padding(.top, 12)
-        .padding(.bottom, safeBottom)
+        // Padding inferior fixo: iPad usa 60pt (garante espaço acima de qualquer barra do sistema),
+        // iPhone usa safeAreaPadding automático do SwiftUI
+        .padding(.bottom, isPad ? 60 : 34)
     }
 }
