@@ -140,25 +140,32 @@ struct CustomPaywallView: View {
                 }
 
                 // ── Rodapé
-                HStack(spacing: 5) {
+                HStack {
                     Button("Restore Purchases") {
                         Task { await restaurar() }
                     }
-                    
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+
                     Spacer()
-                    
-                    Button("Terms") {
-                        openURL("https://pond-copper-f2d.notion.site/Terms-Conditions-33ec184f413780aaaaecdb2df0e73807")
+
+                    Button {
+                        openURL("https://time-mare-9c9.notion.site/Terms-Conditions-EULA-33e73c91fe7b806ba953f81a0e124d83")
+                    } label: {
+                        Text("Terms of Use (EULA)")
+                            .font(.system(size: 12, weight: .semibold))
+                            .underline()
+                            .foregroundStyle(Color("Button"))
                     }
-                    
-                    Text("&")
-                    
-                    Button("Privacy") {
+
+                    Spacer()
+
+                    Button("Privacy Policy") {
                         openURL("https://pond-copper-f2d.notion.site/Privacy-Policy-33ec184f41378005970bf436a8ecf0eb?pvs=73")
                     }
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
                 }
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.secondary)
                 .padding(.horizontal, 30)
                 .padding(.top, 24)
                 .padding(.bottom, 40)
