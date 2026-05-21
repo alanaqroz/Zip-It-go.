@@ -122,7 +122,7 @@ struct Step2ViajantesView: View {
                     ])
                     vm.avancar(para: 3)
                 }
-                .padding(40)
+                .padding(.bottom, 40)
             }
         }
         .navigationBarBackButtonHidden(true)

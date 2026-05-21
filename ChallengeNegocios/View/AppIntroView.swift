@@ -48,7 +48,7 @@ struct AppIntroView: View {
                 HStack(spacing: 8) {
                     ForEach(0..<3, id: \.self) { i in
                         Circle()
-                            .fill(i == pagina ? Color("Button") : Color.white.opacity(0.50))
+                            .fill(i == pagina ? Color("Button") : Color("Button").opacity(0.30))
                             .frame(width: i == pagina ? 8 : 6,
                                    height: i == pagina ? 8 : 6)
                             .animation(.spring(duration: 0.3), value: pagina)
@@ -87,14 +87,14 @@ struct AppIntroView: View {
                             Image(systemName: "chevron.right")
                         }
                         .font(.body)
-                        .fontWeight(.bold)
+                        .fontWeight(.semibold)
                         .foregroundStyle(Color("ButtonLabel"))
-                        .frame(maxWidth: isPad ? 480 : .infinity)
-                        .padding(.vertical, 18)
+                        .frame(maxWidth: isPad ? 480 : 354)
+                        .frame(height: 52)
                         .background(Color("Button"))
                         .clipShape(Capsule())
                     }
-                    .padding(.horizontal, horizontalPadding)
+                    .padding(.horizontal, isPad ? 60 : 18)
                 }
             }
             .padding(.bottom, bottomPadding)

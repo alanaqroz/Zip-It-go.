@@ -169,8 +169,9 @@ struct Step1DestinoView: View {
                 vm.avancar(para: 2)
                 
             }
-            .padding(40)
+            .padding(.bottom, 40)
         }
+        
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .onTapGesture {
@@ -215,28 +216,32 @@ struct BotaoContinuarView: View {
             Text(rotulo)
                 .font(.body)
                 .fontWeight(.semibold)
-                .frame(maxWidth: isPad ? 480 : .infinity)
-                .frame(height: AppLayout.alturaBotao)
-                .background(
-                    ativo ? Color("Button") : Color.primary.opacity(0.12)
-                )
-                .foregroundStyle(
-                    ativo ? Color("ButtonLabel") : Color.primary.opacity(0.35)
-                )
-                .cornerRadius(AppLayout.raioBotao)
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppLayout.raioBotao)
-                        .strokeBorder(
-                            ativo ? Color("StrokeButtonDark") : Color.clear,
-                            lineWidth: 1
-                        )
-                )
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
         }
+        .background(
+            ativo ? Color("Button") : Color.primary.opacity(0.12)
+        )
+        .foregroundStyle(
+            ativo ? Color("ButtonLabel") : Color.primary.opacity(0.35)
+        )
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: AppLayout.raioBotao,
+                style: .continuous
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppLayout.raioBotao)
+                .strokeBorder(
+                    ativo ? Color("StrokeButtonDark") : Color.clear,
+                    lineWidth: 1
+                )
+        )
         .disabled(!ativo)
-        .padding(.horizontal, isPad ? 60 : AppLayout.espacamento)
+        .padding(.horizontal, AppLayout.espacamento)
         .padding(.top, 12)
-        // Padding inferior fixo: iPad usa 60pt (garante espaço acima de qualquer barra do sistema),
-        // iPhone usa safeAreaPadding automático do SwiftUI
-        .padding(.bottom, isPad ? 60 : 34)
+        .padding(.bottom, isPad ? 34 : 34)
+        .offset(y: isPad ? -70 : 0)
     }
 }
