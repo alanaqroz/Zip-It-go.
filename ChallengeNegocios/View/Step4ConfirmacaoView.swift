@@ -126,8 +126,12 @@ struct Step4ConfirmacaoView: View {
                     }
                     .padding(14)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color("Icon").opacity(0.25))
+                    .background(Color("AlertButton"))
                     .cornerRadius(24)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24)
+                            .strokeBorder(Color("StrokeAlertButton"), lineWidth: 1)
+                    )
                     .padding(.bottom, AppLayout.alturaBotao + 32)
                 }
                 .padding(.horizontal, AppLayout.espacamento)
@@ -138,7 +142,7 @@ struct Step4ConfirmacaoView: View {
                 BotaoContinuarView(ativo: true, rotulo: "✦  Generate My Packing List") {
                     mostraAlerta = true
                 }
-                .padding(40)
+                .padding(.bottom, 40)
             }
             
 

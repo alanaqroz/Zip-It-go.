@@ -172,7 +172,7 @@ struct Step3TipoViagemView: View {
                 ])
                 vm.avancar(para: 4)
             }
-            .padding(40)
+            .padding(.bottom, 40)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
