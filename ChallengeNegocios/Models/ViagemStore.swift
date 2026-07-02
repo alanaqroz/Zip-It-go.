@@ -13,6 +13,13 @@ class ViagemStore {
 
     private let chave = "viagens_salvas"
 
+    /// Fila serial dedicada à persistência. Mantém a ordem das gravações
+    /// sem bloquear a main thread com encode do JSON + escrita no UserDefaults.
+    private let filaPersistencia = DispatchQueue(
+        label: "com.zipit.viagemstore.persistencia",
+        qos: .utility
+    )
+
     init() {
         carregar()
     }
@@ -37,9 +44,15 @@ class ViagemStore {
 
     // MARK: - Persistência
 
+    /// Faz um snapshot do estado atual (na main thread, onde `viagens` é lido)
+    /// e delega o trabalho pesado (encode + escrita em disco) para uma fila
+    /// em background, evitando travar a UI a cada alteração.
     private func salvar() {
-        guard let data = try? JSONEncoder().encode(viagens) else { return }
-        UserDefaults.standard.set(data, forKey: chave)
+        let snapshot = viagens
+        filaPersistencia.async { [chave] in
+            guard let data = try? JSONEncoder().encode(snapshot) else { return }
+            UserDefaults.standard.set(data, forKey: chave)
+        }
     }
 
     private func carregar() {
