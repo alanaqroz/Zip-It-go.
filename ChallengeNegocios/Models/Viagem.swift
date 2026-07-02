@@ -76,8 +76,6 @@ struct Viagem: Identifiable, Codable {
     }
 
     var periodoFormatado: String {
-        let fmt = DateFormatter()
-        fmt.dateFormat = "dd MMM"
-        return "\(fmt.string(from: dataIda)) - \(fmt.string(from: dataVolta))"
+        "\(DateFormatter.diaMes.string(from: dataIda)) - \(DateFormatter.diaMes.string(from: dataVolta))"
     }
 }

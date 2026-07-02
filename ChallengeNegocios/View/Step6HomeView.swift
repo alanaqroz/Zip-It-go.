@@ -254,10 +254,7 @@ private struct CardViagemView: View {
     let viagem: Viagem
 
     private var periodoResumido: String {
-        let fmt = DateFormatter()
-        fmt.dateFormat = "d MMM"
-        fmt.locale = Locale(identifier: "en_US")
-        return "\(fmt.string(from: viagem.dataIda)) – \(fmt.string(from: viagem.dataVolta))"
+        "\(DateFormatter.diaMesCard.string(from: viagem.dataIda)) – \(DateFormatter.diaMesCard.string(from: viagem.dataVolta))"
     }
 
     // Cores do tag por tipo de viagem
