@@ -129,6 +129,23 @@ actor WeatherService {
         return code
     }
 
+    /// Estima a estação a partir só da geocodificação do destino, sem depender
+    /// da previsão do tempo. Usado como fallback quando o WeatherKit falha mas
+    /// ainda precisamos de uma estação pra montar a lista. Reaproveita a mesma
+    /// lógica de `detectarEstacao` (incluindo o ajuste pra trópicos) em vez de
+    /// duplicar a classificação a partir de uma lista fixa de países.
+    /// Retorna "" se nem a geocodificação for possível.
+    func estimarEstacao(destino: String, data: Date) async -> String {
+        let geocoder = CLGeocoder()
+        guard
+            let placemarks = try? await geocoder.geocodeAddressString(destino),
+            let latitude = placemarks.first?.location?.coordinate.latitude
+        else { return "" }
+
+        let mes = Calendar.current.component(.month, from: data)
+        return detectarEstacao(mes: mes, latitude: latitude)
+    }
+
     // MARK: - Helpers
 
     private func detectarEstacao(mes: Int, latitude: Double) -> String {
