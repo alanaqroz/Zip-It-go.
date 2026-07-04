@@ -357,6 +357,7 @@ private struct CardViagemView: View {
 struct ViagemDetalheView: View {
     let viagem: Viagem
     @State private var checklistVM = ChecklistViewModel()
+    @Environment(ViagemStore.self) private var store
 
     var body: some View {
         MainChecklistView(vm: checklistVM)
@@ -368,6 +369,15 @@ struct ViagemDetalheView: View {
                 checklistVM.tempMax       = viagem.tempMax
                 checklistVM.condicaoClima = viagem.condicaoClima
                 checklistVM.estacao       = viagem.estacao
+            }
+            // Sincroniza qualquer alteração no checklist (marcar item, mudar
+            // quantidade, adicionar/remover) de volta na ViagemStore. Sem isso,
+            // as mudanças ficavam só na memória do ViewModel e sumiam ao sair
+            // e reabrir a viagem.
+            .onChange(of: checklistVM.itens) { _, novosItens in
+                var viagemAtualizada = viagem
+                viagemAtualizada.itens = novosItens
+                store.atualizar(viagemAtualizada)
             }
     }
 }
