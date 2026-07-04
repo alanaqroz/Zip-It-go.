@@ -124,24 +124,15 @@ class ChecklistViewModel {
                 "destination": destinoSelecionado,
                 "error": error.localizedDescription
             ])
-            let mes = Calendar.current.component(.month, from: dataIda)
-            let hemisferioSul = ["BR","AR","CL","AU","NZ","ZA","UY","PY","BO","PE"].contains(isoCode.uppercased())
-            let estacaoEstimada: String
-            if hemisferioSul {
-                switch mes {
-                case 12,1,2: estacaoEstimada = "Summer"
-                case 3,4,5:  estacaoEstimada = "Fall"
-                case 6,7,8:  estacaoEstimada = "Winter"
-                default:      estacaoEstimada = "Spring"
-                }
-            } else {
-                switch mes {
-                case 12,1,2: estacaoEstimada = "Winter"
-                case 3,4,5:  estacaoEstimada = "Spring"
-                case 6,7,8:  estacaoEstimada = "Summer"
-                default:      estacaoEstimada = "Fall"
-                }
-            }
+            // Antes: estimava a estação com uma lista fixa de 10 países pra
+            // decidir hemisfério, sem latitude — nem cobria a maioria dos
+            // países do hemisfério sul, nem captava que um país grande (ex:
+            // Brasil) cruza zonas climáticas bem diferentes. Agora reaproveita
+            // a mesma lógica baseada em latitude/trópicos do WeatherService.
+            let estacaoEstimada = await WeatherService.shared.estimarEstacao(
+                destino: destinoSelecionado,
+                data: dataIda
+            )
             await MainActor.run { estacao = estacaoEstimada }
             climaResumo = "\(DateFormatter.mesCompleto.string(from: dataIda))"
         }
