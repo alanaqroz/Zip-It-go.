@@ -133,6 +133,19 @@ actor WeatherService {
 
     private func detectarEstacao(mes: Int, latitude: Double) -> String {
         let hemisferioSul = latitude < 0
+
+        // Dentro dos trópicos (entre os paralelos 23,5° N e 23,5° S) não existem
+        // as 4 estações térmicas do clima temperado — a variação real é entre
+        // período seco e período chuvoso. Sem esse ajuste, destinos próximos da
+        // linha do Equador (ex: Marabá-PA, a ~5°S) eram classificados como
+        // "Winter" em pleno período seco/quente só por caírem no bloco de mês
+        // 6-7-8 do hemisfério sul, o que não corresponde à realidade local.
+        if abs(latitude) <= 23.5 {
+            let mesesSecosNoSul: Set<Int> = [5, 6, 7, 8, 9, 10]
+            let estacaoSeca = hemisferioSul ? mesesSecosNoSul.contains(mes) : !mesesSecosNoSul.contains(mes)
+            return estacaoSeca ? "Summer" : "Winter"
+        }
+
         switch mes {
         case 12, 1, 2:  return hemisferioSul ? "Summer" : "Winter"
         case 3, 4, 5:   return hemisferioSul ? "Fall"   : "Spring"
