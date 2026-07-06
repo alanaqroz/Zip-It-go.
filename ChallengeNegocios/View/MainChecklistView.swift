@@ -24,6 +24,9 @@ struct MainChecklistView: View {
 
     // MARK: - Export text
     private var textoCompartilhavel: String {
+        let agrupados = itensAgrupados(busca: textoBusca, itens: vm.itens)
+        let categorias = categoriasOrdenadas(agrupados: agrupados)
+
         var linhas: [String] = []
         linhas.append("Packing List — \(vm.destinoSelecionado)")
         linhas.append(vm.periodoFormatado)
@@ -34,8 +37,8 @@ struct MainChecklistView: View {
             linhas.append("Weather: \(clima)")
         }
         linhas.append("")
-        for cat in categoriasOrdenadas {
-            let itens = itensAgrupados[cat] ?? []
+        for cat in categorias {
+            let itens = agrupados[cat] ?? []
             linhas.append("── \(cat.uppercased()) ──")
             for item in itens {
                 let check = item.estaMarcado ? "✓" : "○"
@@ -52,22 +55,31 @@ struct MainChecklistView: View {
         "Kids", "Baby"
     ]
 
-    private var itensAgrupados: [String: [ItemMala]] {
-        let fonte = textoBusca.isEmpty ? vm.itens : vm.itens.filter {
-            $0.nomeApenas.localizedCaseInsensitiveContains(textoBusca)
+    // Antes eram computed properties, recalculadas (com filter + Dictionary(grouping:))
+    // toda vez que eram acessadas — e o body acessava várias vezes por render
+    // (uma vez por seção, uma vez por header, etc). Agora são funções puras,
+    // calculadas uma única vez por render e reaproveitadas via `let` no body.
+    private func itensAgrupados(busca: String, itens: [ItemMala]) -> [String: [ItemMala]] {
+        let fonte = busca.isEmpty ? itens : itens.filter {
+            $0.nomeApenas.localizedCaseInsensitiveContains(busca)
         }
         return Dictionary(grouping: fonte) { $0.categoria }
     }
 
-    private var categoriasOrdenadas: [String] {
-        let conhecidas = ordemCategorias.filter { itensAgrupados[$0] != nil }
-        let extras = itensAgrupados.keys.filter { !ordemCategorias.contains($0) }.sorted()
+    private func categoriasOrdenadas(agrupados: [String: [ItemMala]]) -> [String] {
+        let conhecidas = ordemCategorias.filter { agrupados[$0] != nil }
+        let extras = agrupados.keys.filter { !ordemCategorias.contains($0) }.sorted()
         return conhecidas + extras
     }
 
     // MARK: - Body
 
     var body: some View {
+        // Calculados uma única vez por render e reaproveitados abaixo,
+        // em vez de recomputar o agrupamento a cada acesso.
+        let agrupados = itensAgrupados(busca: textoBusca, itens: vm.itens)
+        let categorias = categoriasOrdenadas(agrupados: agrupados)
+
         ZStack {
             Image("FundoLista")
                 .resizable()
@@ -84,9 +96,9 @@ struct MainChecklistView: View {
                 }
 
                 // MARK: Categories
-                ForEach(categoriasOrdenadas, id: \.self) { cat in
+                ForEach(categorias, id: \.self) { cat in
                     Section {
-                        ForEach(itensAgrupados[cat] ?? []) { item in
+                        ForEach(agrupados[cat] ?? []) { item in
                             itemRow(item)
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
@@ -126,8 +138,8 @@ struct MainChecklistView: View {
                             Text(cat)
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(.primary)
-                            let marcados = (itensAgrupados[cat] ?? []).filter { $0.estaMarcado }.count
-                            let total = (itensAgrupados[cat] ?? []).count
+                            let marcados = (agrupados[cat] ?? []).filter { $0.estaMarcado }.count
+                            let total = (agrupados[cat] ?? []).count
                             Text("\(marcados)/\(total)")
                                 .font(.body)
                                 .foregroundColor(.secondary)
@@ -205,8 +217,8 @@ struct MainChecklistView: View {
                             tempMin: vm.tempMin,
                             tempMax: vm.tempMax
                         )
-                        let categoriasExport = categoriasOrdenadas
-                        let agrupadosExport = itensAgrupados
+                        let agrupadosExport = itensAgrupados(busca: textoBusca, itens: vm.itens)
+                        let categoriasExport = categoriasOrdenadas(agrupados: agrupadosExport)
 
                         DispatchQueue.global(qos: .userInitiated).async {
                             let url = gerarPDF(
@@ -220,6 +232,7 @@ struct MainChecklistView: View {
                             }
                         }
                     } label: {
+
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.primary)

@@ -254,10 +254,7 @@ private struct CardViagemView: View {
     let viagem: Viagem
 
     private var periodoResumido: String {
-        let fmt = DateFormatter()
-        fmt.dateFormat = "d MMM"
-        fmt.locale = Locale(identifier: "en_US")
-        return "\(fmt.string(from: viagem.dataIda)) – \(fmt.string(from: viagem.dataVolta))"
+        "\(DateFormatter.diaMesCard.string(from: viagem.dataIda)) – \(DateFormatter.diaMesCard.string(from: viagem.dataVolta))"
     }
 
     // Cores do tag por tipo de viagem
@@ -360,6 +357,7 @@ private struct CardViagemView: View {
 struct ViagemDetalheView: View {
     let viagem: Viagem
     @State private var checklistVM = ChecklistViewModel()
+    @Environment(ViagemStore.self) private var store
 
     var body: some View {
         MainChecklistView(vm: checklistVM)
@@ -371,6 +369,15 @@ struct ViagemDetalheView: View {
                 checklistVM.tempMax       = viagem.tempMax
                 checklistVM.condicaoClima = viagem.condicaoClima
                 checklistVM.estacao       = viagem.estacao
+            }
+            // Sincroniza qualquer alteração no checklist (marcar item, mudar
+            // quantidade, adicionar/remover) de volta na ViagemStore. Sem isso,
+            // as mudanças ficavam só na memória do ViewModel e sumiam ao sair
+            // e reabrir a viagem.
+            .onChange(of: checklistVM.itens) { _, novosItens in
+                var viagemAtualizada = viagem
+                viagemAtualizada.itens = novosItens
+                store.atualizar(viagemAtualizada)
             }
     }
 }

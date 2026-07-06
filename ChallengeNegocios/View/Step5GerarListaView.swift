@@ -17,6 +17,9 @@ struct Step5GerarListaView: View {
 
     @State private var checklistVM = ChecklistViewModel()
     @State private var currentIndex = 0
+    /// Referência da viagem já persistida na store (preenchida em `salvarViagem()`).
+    /// Enquanto for `nil`, a lista ainda não existe na store — não há o que sincronizar.
+    @State private var viagemSalva: Viagem? = nil
 
     let timer = Timer.publish(every: 0.25, on: .main, in: .common).autoconnect()
     let indexLimite = 4
@@ -43,6 +46,15 @@ struct Step5GerarListaView: View {
             if !carregando && !checklistVM.itens.isEmpty {
                 salvarViagem()
             }
+        }
+        // Se a pessoa marcar/desmarcar item, mudar quantidade ou adicionar
+        // algo ainda nesta tela (depois da lista já ter sido salva), sincroniza
+        // de volta com a store — senão essas alterações somem ao sair daqui.
+        .onChange(of: checklistVM.itens) { _, novosItens in
+            guard var viagem = viagemSalva else { return }
+            viagem.itens = novosItens
+            store.atualizar(viagem)
+            viagemSalva = viagem
         }
     }
 
@@ -93,6 +105,7 @@ struct Step5GerarListaView: View {
         viagem.condicaoClima = checklistVM.condicaoClima
         viagem.estacao       = checklistVM.estacao
         store.adicionar(viagem)
+        viagemSalva = viagem
         PostHogSDK.shared.capture("trip_saved", properties: [
             "destination": viagem.destino,
             "days": viagem.quantidadeDias,

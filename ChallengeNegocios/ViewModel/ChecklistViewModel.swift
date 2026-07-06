@@ -54,11 +54,7 @@ class ChecklistViewModel {
     var totalItens: Int { itens.count }
 
     var periodoFormatado: String {
-        let fmt = DateFormatter()
-        fmt.dateFormat = "dd/MM"
-        let fmtAno = DateFormatter()
-        fmtAno.dateFormat = "yyyy"
-        return "\(fmt.string(from: dataIda)) - \(fmt.string(from: dataVolta)), \(fmtAno.string(from: dataVolta))."
+        "\(DateFormatter.diaMesBarra.string(from: dataIda)) - \(DateFormatter.diaMesBarra.string(from: dataVolta)), \(DateFormatter.ano.string(from: dataVolta))."
     }
 
     // MARK: - Actions
@@ -138,9 +134,7 @@ class ChecklistViewModel {
                 data: dataIda
             )
             await MainActor.run { estacao = estacaoEstimada }
-            let fmt = DateFormatter()
-            fmt.dateFormat = "MMMM"
-            climaResumo = "\(fmt.string(from: dataIda))"
+            climaResumo = "\(DateFormatter.mesCompleto.string(from: dataIda))"
         }
 
         let foraDoBrasil = isoCode.uppercased() != "BR" && !isoCode.isEmpty

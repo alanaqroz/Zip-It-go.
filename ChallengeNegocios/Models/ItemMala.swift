@@ -7,7 +7,10 @@
 
 import SwiftUI
 
-struct ItemMala: Identifiable, Codable {
+// Equatable é necessário para usar `.onChange(of: itens)` nas telas que
+// sincronizam o checklist de volta com a ViagemStore (evita perder
+// marcações/quantidades ao sair e reabrir uma viagem).
+struct ItemMala: Identifiable, Codable, Equatable {
     var id: UUID = UUID()
     var nome: String
     var estaMarcado: Bool = false
