@@ -18,7 +18,20 @@ private struct ShareSheet: UIViewControllerRepresentable {
 }
 
 // MARK: - PDF Export helper
-private func gerarPDF(vm: ChecklistViewModel,
+
+/// Snapshot só com os valores (todos tipos-valor) que o PDF precisa do
+/// ChecklistViewModel. Existe pra permitir gerar o PDF numa fila de
+/// background sem carregar uma referência à classe do ViewModel pra lá
+/// (o ViewModel é @Observable e não é seguro de acessar fora da main thread).
+private struct DadosExportacaoPDF {
+    let destino: String
+    let periodo: String
+    let estacao: String
+    let tempMin: Double?
+    let tempMax: Double?
+}
+
+private func gerarPDF(dados: DadosExportacaoPDF,
                       categoriasOrdenadas: [String],
                       itensAgrupados: [String: [ItemMala]]) -> URL? {
 
@@ -76,7 +89,7 @@ private func gerarPDF(vm: ChecklistViewModel,
             y += 30
 
             // Destino
-            let destino = vm.destinoSelecionado
+            let destino = dados.destino
             let atDestino: [NSAttributedString.Key: Any] = [
                 .font: bold(15), .foregroundColor: corAccent
             ]
@@ -84,7 +97,7 @@ private func gerarPDF(vm: ChecklistViewModel,
             y += 22
 
             // Período
-            let periodo = vm.periodoFormatado
+            let periodo = dados.periodo
             let atPeriodo: [NSAttributedString.Key: Any] = [
                 .font: regular(12), .foregroundColor: corCinza
             ]
@@ -92,12 +105,12 @@ private func gerarPDF(vm: ChecklistViewModel,
             y += 18
 
             // Clima
-            if !vm.estacao.isEmpty {
+            if !dados.estacao.isEmpty {
                 let clima: String
-                if let tMin = vm.tempMin, let tMax = vm.tempMax {
-                    clima = "🌤 \(Int(tMin))°C – \(Int(tMax))°C · \(vm.estacao)"
+                if let tMin = dados.tempMin, let tMax = dados.tempMax {
+                    clima = "🌤 \(Int(tMin))°C – \(Int(tMax))°C · \(dados.estacao)"
                 } else {
-                    clima = "🌤 \(vm.estacao)"
+                    clima = "🌤 \(dados.estacao)"
                 }
                 clima.draw(at: CGPoint(x: margin, y: y), withAttributes: atPeriodo)
                 y += 18
@@ -392,13 +405,33 @@ struct MainChecklistView: View {
 
                     // Exportar — gera PDF com a lista completa
                     Button {
-                        DispatchQueue.main.async {
-                            urlPDFExportado = gerarPDF(
-                                vm: vm,
-                                categoriasOrdenadas: categoriasOrdenadas,
-                                itensAgrupados: itensAgrupados
+                        // Snapshot dos dados (tipos-valor) ainda na main thread —
+                        // seguro de levar pra uma fila de background.
+                        let dadosExport = DadosExportacaoPDF(
+                            destino: vm.destinoSelecionado,
+                            periodo: vm.periodoFormatado,
+                            estacao: vm.estacao,
+                            tempMin: vm.tempMin,
+                            tempMax: vm.tempMax
+                        )
+                        let categoriasExport = categoriasOrdenadas
+                        let agrupadosExport = itensAgrupados
+
+                        // O desenho do PDF (UIGraphicsPDFRenderer + escrita em
+                        // disco) rodava direto na main thread e podia travar a
+                        // UI por um instante em listas grandes. Agora roda numa
+                        // fila de background; só a atualização do @State volta
+                        // pra main thread, que é onde ela precisa acontecer.
+                        DispatchQueue.global(qos: .userInitiated).async {
+                            let url = gerarPDF(
+                                dados: dadosExport,
+                                categoriasOrdenadas: categoriasExport,
+                                itensAgrupados: agrupadosExport
                             )
-                            mostraShareSheet = urlPDFExportado != nil
+                            DispatchQueue.main.async {
+                                urlPDFExportado = url
+                                mostraShareSheet = url != nil
+                            }
                         }
                     } label: {
                         Image(systemName: "square.and.arrow.up")
