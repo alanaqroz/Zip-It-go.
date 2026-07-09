@@ -10,7 +10,15 @@ import PostHog
 
 struct Step1DestinoView: View {
     @Environment(OnboardingViewModel.self) private var vm
+    @Environment(\.colorScheme) private var colorScheme
     @State private var locService = LocationService()
+
+    // No dark mode o branco translúcido sobre o fundo escuro já bate com o
+    // design; no light mode a mesma opacidade fica quase invisível sobre um
+    // fundo claro, então os campos precisam ser branco sólido (#FFFFFF).
+    private var corFundoCampo: Color {
+        colorScheme == .dark ? Color.white.opacity(0.08) : Color.white
+    }
 
     var body: some View {
         @Bindable var vm = vm
@@ -46,7 +54,7 @@ struct Step1DestinoView: View {
                             Image(systemName: "location.circle")
                         }
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
 
                         HStack(spacing: 10) {
                             Image(systemName: "magnifyingglass")
@@ -63,7 +71,7 @@ struct Step1DestinoView: View {
                         }
                         .padding(.horizontal, AppLayout.espacamentoInterno)
                         .padding(.vertical, 14)
-                        .background(.regularMaterial)
+                        .background(corFundoCampo)
                         .cornerRadius(26)
 
                         if !locService.sugestoes.isEmpty &&
@@ -107,7 +115,7 @@ struct Step1DestinoView: View {
                                     }
                                 }
                             }
-                            .background(.regularMaterial)
+                            .background(corFundoCampo)
                             .cornerRadius(AppLayout.raioCantos)
                         }
                     }
@@ -121,7 +129,7 @@ struct Step1DestinoView: View {
                             Image(systemName: "calendar")
                         }
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
 
                         VStack(spacing: 0) {
                             HStack {
@@ -149,7 +157,7 @@ struct Step1DestinoView: View {
                             .padding(.horizontal, AppLayout.espacamentoInterno)
                             .padding(.vertical, 14)
                         }
-                        .background(.regularMaterial)
+                        .background(corFundoCampo)
                         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                     }
 
@@ -189,12 +197,18 @@ struct StepIndicatorView: View {
     let etapaAtual: Int
     let totalEtapas: Int
 
+    // Traços finos e largos (não bolinhas): a etapa atual fica mais larga
+    // que as demais pra se destacar, todas com a mesma altura baixa.
+    private let alturaTraco: CGFloat = 4
+    private let larguraAtiva: CGFloat = 36
+    private let larguraInativa: CGFloat = 24
+
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             ForEach(1...totalEtapas, id: \.self) { i in
-                RoundedRectangle(cornerRadius: AppLayout.alturaIndicador / 2)
+                RoundedRectangle(cornerRadius: alturaTraco / 2)
                     .fill(i <= etapaAtual ? Color("Button") : Color.primary.opacity(0.25))
-                    .frame(width: 20, height: AppLayout.alturaIndicador)
+                    .frame(width: i == etapaAtual ? larguraAtiva : larguraInativa, height: alturaTraco)
             }
         }
         .frame(maxWidth: .infinity, alignment: .center)

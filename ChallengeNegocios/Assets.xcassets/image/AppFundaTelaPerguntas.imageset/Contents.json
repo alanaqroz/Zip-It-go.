@@ -11,7 +11,7 @@
           "value" : "light"
         }
       ],
-      "filename" : "Fundo Telas Light.png",
+      "filename" : "data.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -22,7 +22,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "Fundo telas Dark.png",
+      "filename" : "Fundo novo telas cadastro.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
