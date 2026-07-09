@@ -11,7 +11,7 @@
           "value" : "light"
         }
       ],
-      "filename" : "1-onboardingLight.svg",
+      "filename" : "onboardingL.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -22,7 +22,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "1-onboardingDark.svg",
+      "filename" : "1-onboarding.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },

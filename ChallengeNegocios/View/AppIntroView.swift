@@ -5,40 +5,43 @@
 
 import SwiftUI
 
-private let W = UIScreen.main.bounds.width
-private let H = UIScreen.main.bounds.height
+// MARK: - Modelo de Dados
+struct OnboardingItem: Identifiable {
+    let id = UUID()
+    let asset: String
+    let titulo: String
+    let descricao: String
+}
 
 // MARK: - Container principal
-
 struct AppIntroView: View {
     var aoConcluir: () -> Void
     @State private var pagina = 0
 
-    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
-    private var bottomPadding: CGFloat { isPad ? 80 : 40 }
-    private var horizontalPadding: CGFloat { isPad ? 60 : 40 }
-
+    // Lista de páginas
+        private let paginas: [OnboardingItem] = [
+            OnboardingItem(asset: "onboarding1", titulo: "Pack your suitcase in\nminutes.", descricao: "Zip It! creates a personalized list of everything you need to take on your trip—so you don't forget a thing."),
+            OnboardingItem(asset: "onboarding2", titulo: "Every trip is unique.\nSo is your list.", descricao: "We take into account the destination's climate, the time of year, your activities, and who's traveling with you."),
+            OnboardingItem(asset: "onboarding3", titulo: "Travel worry-free.", descricao: "Plan your suitcase ahead of time and have everything organized before you even step out the door.")
+        ]
+        
+        private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
+        private var bottomPadding: CGFloat { isPad ? 80 : 40 }
+        private var horizontalPadding: CGFloat { isPad ? 60 : 40 }
+    
+    
     var body: some View {
         ZStack(alignment: .bottom) {
-
             TabView(selection: $pagina) {
-                PaginaOnboarding(
-                    asset: "onboarding1",
-                    titulo: "Pack your suitcase in\nminutes.",
-                    descricao: "Zip It! creates a personalized list of everything you need to take on your trip—so you don't forget a thing."
-                ).tag(0)
-
-                PaginaOnboarding(
-                    asset: "onboarding2",
-                    titulo: "Every trip is unique.\nSo is your list.",
-                    descricao: "We take into account the destination's climate, the time of year, your activities, and who's traveling with you."
-                ).tag(1)
-
-                PaginaOnboarding(
-                    asset: "onboarding3",
-                    titulo: "Travel worry-free.",
-                    descricao: "Plan your suitcase ahead of time and have everything organized before you even step out the door."
-                ).tag(2)
+                // Loop das paginas
+                ForEach(Array(paginas.enumerated()), id: \.element.id) { index, item in
+                    PaginaOnboarding(
+                        asset: item.asset,
+                        titulo: item.titulo,
+                        descricao: item.descricao
+                    )
+                    .tag(index)
+                }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .ignoresSafeArea()
@@ -46,18 +49,17 @@ struct AppIntroView: View {
             VStack(spacing: 0) {
                 // Dots
                 HStack(spacing: 8) {
-                    ForEach(0..<3, id: \.self) { i in
+                    ForEach(0..<paginas.count, id: \.self) { i in
                         Circle()
                             .fill(i == pagina ? Color("Button") : Color("Button").opacity(0.30))
-                            .frame(width: i == pagina ? 8 : 6,
-                                   height: i == pagina ? 8 : 6)
+                            .frame(width: i == pagina ? 8 : 6, height: i == pagina ? 8 : 6)
                             .animation(.spring(duration: 0.3), value: pagina)
                     }
                 }
                 .padding(.bottom, 32)
 
                 // Ações
-                if pagina < 2 {
+                if pagina < (paginas.count - 1) {
                     HStack {
                         Button("Skip") { aoConcluir() }
                             .font(.body)
@@ -113,16 +115,17 @@ private struct PaginaOnboarding: View {
     var body: some View {
         ZStack(alignment: .bottomLeading) {
 
-            // Fundo completo — a imagem já contém background + ilustração
+            // Fundo
             Image(asset)
                 .resizable()
                 .scaledToFill()
-                .frame(width: W, height: H)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
                 .ignoresSafeArea()
+                .accessibilityHidden(true)
 
 
-            // Texto posicionado na parte inferior
+            // Texto na parte inferior
             VStack(alignment: .leading, spacing: 16) {
                 Text(titulo)
                     .font(.system(size: 30, weight: .bold))
@@ -136,6 +139,6 @@ private struct PaginaOnboarding: View {
             .padding(.horizontal, 40)
             .padding(.bottom, 200)
         }
-        .frame(width: W, height: H)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
